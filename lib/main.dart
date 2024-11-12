@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile_page.dart';
+import 'cart_page.dart'; // Import the CartPage
 
 void main() {
   runApp(MyApp());
@@ -26,15 +27,32 @@ class HomePage extends StatelessWidget {
         title: Text('Home Page'),
       ),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // Navigate to ProfilePage when tapped
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfilePage()),
-            );
-          },
-          child: Text('Go to Profile'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Button to navigate to ProfilePage
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+              child: Text('Go to Profile'),
+            ),
+            SizedBox(height: 20), // Space between buttons
+
+            // Button to navigate to CartPage
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CartPage()),
+                );
+              },
+              child: Text('Go to Cart'),
+            ),
+          ],
         ),
       ),
     );

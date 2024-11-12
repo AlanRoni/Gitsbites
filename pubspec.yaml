@@ -23,3 +23,7 @@ flutter:
 
   assets:
     - assets/profile_pic.png
+    - assets/item1.png
+    - assets/item2.png
+    - assets/item3.png
+
