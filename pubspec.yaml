@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  firebase_core: ^3.8.0
 
 dev_dependencies:
   flutter_test:
@@ -23,3 +24,7 @@ flutter:
 
   assets:
     - assets/profile_pic.png
+    - assets/item1.png
+    - assets/item2.png
+    - assets/item3.png
+
