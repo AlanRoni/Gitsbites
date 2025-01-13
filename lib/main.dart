@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'cart_page.dart'; // Import the CartPage
 import 'payment.dart'; // Import the PaymentPage
-import 'package:flutter/foundation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
