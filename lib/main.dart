@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'cart_page.dart'; // Import the CartPage
+import 'payment.dart'; // Import the PaymentPage
+import 'package:flutter/foundation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -68,6 +72,18 @@ class HomePage extends StatelessWidget {
                 );
               },
               child: Text('Go to Cart'),
+            ),
+            SizedBox(height: 20), // Space between buttons
+
+            // Button to navigate to PaymentPage
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PaymentPage()),
+                );
+              },
+              child: Text('Go to Payment'),
             ),
           ],
         ),
