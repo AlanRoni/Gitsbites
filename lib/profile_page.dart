@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
+        title: const Text('Profile'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -24,57 +26,57 @@ class ProfilePage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: AssetImage(
+                    backgroundImage: const AssetImage(
                         'assets/profile_pic.png'), // Replace with actual image path
                     backgroundColor: Colors.grey[200],
                   ),
-                  SizedBox(height: 10),
-                  Text(
+                  const SizedBox(height: 10),
+                  const Text(
                     'Alhaarith Hakkim',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
             // Personal Details section
-            Text(
+            const Text(
               'Personal Details',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             // Personal details cards
-            Card(
+            const Card(
               child: ListTile(
                 leading: Icon(Icons.school),
                 title: Text('Computer Science'),
               ),
             ),
-            Card(
+            const Card(
               child: ListTile(
                 leading: Icon(Icons.calendar_today),
                 title: Text('21-25'),
               ),
             ),
-            Card(
+            const Card(
               child: ListTile(
                 leading: Icon(Icons.email),
                 title: Text('ahh.csa2125@saintgits.org'),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Recent Orders section
-            Text(
+            const Text(
               'Recent Orders',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             // Recent order card
-            Card(
+            const Card(
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundImage: AssetImage(
