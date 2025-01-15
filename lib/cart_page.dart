@@ -29,6 +29,8 @@ class CartPage extends StatelessWidget {
     },
   ];
 
+  CartPage({super.key});
+
   // Function to calculate total price
   int calculateTotalPrice() {
     int total = 0;
@@ -43,10 +45,10 @@ class CartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cart'),
+        title: const Text('Cart'),
         actions: [
           IconButton(
-            icon: Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline),
             onPressed: () {
               // Handle cart item deletion
             },
@@ -62,7 +64,7 @@ class CartPage extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = cartItems[index];
                 return Card(
-                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
@@ -74,7 +76,7 @@ class CartPage extends StatelessWidget {
                           height: 60,
                           fit: BoxFit.cover,
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
 
                         // Item details
                         Expanded(
@@ -83,7 +85,7 @@ class CartPage extends StatelessWidget {
                             children: [
                               Text(
                                 item["name"],
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Text("INR ${item['price']}"),
                             ],
@@ -94,14 +96,14 @@ class CartPage extends StatelessWidget {
                         Row(
                           children: [
                             IconButton(
-                              icon: Icon(Icons.remove),
+                              icon: const Icon(Icons.remove),
                               onPressed: () {
                                 // Decrease quantity
                               },
                             ),
                             Text(item["quantity"].toString()),
                             IconButton(
-                              icon: Icon(Icons.add),
+                              icon: const Icon(Icons.add),
                               onPressed: () {
                                 // Increase quantity
                               },
@@ -118,10 +120,10 @@ class CartPage extends StatelessWidget {
 
           // Total and Payment button section
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.grey[100],
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
               ),
@@ -132,7 +134,7 @@ class CartPage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       "Total",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -140,24 +142,24 @@ class CartPage extends StatelessWidget {
                     Text(
                       "Rs. ${calculateTotalPrice()}",
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
                 // Payment button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.green,
                     ),
                     onPressed: () {
                       // Navigate to payment page
                     },
-                    child: Text(
+                    child: const Text(
                       "Go to Payment",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
@@ -169,7 +171,7 @@ class CartPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',

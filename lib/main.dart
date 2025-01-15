@@ -1,15 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'cart_page.dart'; // Import the CartPage
 import 'payment.dart'; // Import the PaymentPage
-import 'package:flutter/foundation.dart';
+import 'admin_menu.dart'; // Import the AdminMenuPage
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
     await Firebase.initializeApp(
-        options: FirebaseOptions(
+        options: const FirebaseOptions(
             apiKey: "AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0",
             authDomain: "gitsbites.firebaseapp.com",
             projectId: "gitsbites",
@@ -20,7 +21,7 @@ void main() async {
   } else {
     await Firebase.initializeApp();
   }
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -40,11 +41,13 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home Page'),
+        title: const Text('Home Page'),
       ),
       body: Center(
         child: Column(
@@ -58,9 +61,9 @@ class HomePage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => ProfilePage()),
                 );
               },
-              child: Text('Go to Profile'),
+              child: const Text('Go to Profile'),
             ),
-            SizedBox(height: 20), // Space between buttons
+            const SizedBox(height: 20), // Space between buttons
 
             // Button to navigate to CartPage
             ElevatedButton(
@@ -70,19 +73,31 @@ class HomePage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => CartPage()),
                 );
               },
-              child: Text('Go to Cart'),
+              child: const Text('Go to Cart'),
             ),
-            SizedBox(height: 20), // Space between buttons
+            const SizedBox(height: 20), // Space between buttons
 
             // Button to navigate to PaymentPage
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => PaymentPage()),
+                  MaterialPageRoute(builder: (context) => const PaymentPage()),
                 );
               },
-              child: Text('Go to Payment'),
+              child: const Text('Go to Payment'),
+            ),
+            const SizedBox(height: 20), // Space between buttons
+
+            // Button to navigate to AdminMenuPage
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminMenuPage()),
+                );
+              },
+              child: const Text('Admin Menu'),
             ),
           ],
         ),
