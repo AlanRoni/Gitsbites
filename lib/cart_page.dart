@@ -64,7 +64,8 @@ class CartPage extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = cartItems[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
@@ -85,7 +86,8 @@ class CartPage extends StatelessWidget {
                             children: [
                               Text(
                                 item["name"],
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                               Text("INR ${item['price']}"),
                             ],
@@ -141,8 +143,8 @@ class CartPage extends StatelessWidget {
                     ),
                     Text(
                       "Rs. ${calculateTotalPrice()}",
-                      style:
-                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

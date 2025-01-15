@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'cart_page.dart'; // Import the CartPage
 import 'payment.dart'; // Import the PaymentPage
+import 'login.dart'; // Import the LoginPage
 import 'admin_menu.dart'; // Import the AdminMenuPage
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
@@ -89,12 +89,24 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 20), // Space between buttons
 
-            // Button to navigate to AdminMenuPage
+            // Button to navigate to LoginPage
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AdminMenuPage()),
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              },
+              child: const Text('Go to Login'),
+            ),
+            const SizedBox(height: 20), // Space between buttons
+
+            // Button to navigate to LoginPage
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AdminMenuPage()),
                 );
               },
               child: const Text('Admin Menu'),
