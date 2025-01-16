@@ -16,11 +16,13 @@ dependencies:
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.0
   google_sign_in: ^6.0.1
+  
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  
 
 flutter:
   uses-material-design: true
@@ -30,4 +32,5 @@ flutter:
     - assets/item1.png
     - assets/item2.png
     - assets/item3.png
+    - assets/logog.png
     - assets/visa.jpg
