@@ -51,19 +51,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: Colors.white, // White AppBar background
-        elevation: 1.0,
-        shadowColor: Colors.black12,
-        title: SizedBox(
-          height: 80, // Increased height for a larger logo
-          child: Image.asset(
-            'assets/Logog.png',
-            fit: BoxFit.contain, // Ensure the logo is fully visible
-          ),
-        ),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -73,76 +60,90 @@ class HomePage extends StatelessWidget {
           ),
         ),
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Welcome Text
-                const Text(
-                  'Welcome to GitsBites',
-                  style: TextStyle(
-                    fontSize: 28.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  // Large Logo
+                  SizedBox(
+                    height: 200, // Larger height for the logo
+                    child: Image.asset(
+                      'assets/Logog.png',
+                      fit: BoxFit
+                          .contain, // Ensure the logo scales proportionally
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
+                  const SizedBox(height: 40),
 
-                // Navigation Buttons
-                _buildElevatedButton(
-                  context: context,
-                  label: 'Go to Profile',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ProfilePage()),
-                    );
-                  },
-                ),
-                _buildElevatedButton(
-                  context: context,
-                  label: 'Go to Cart',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CartPage()),
-                    );
-                  },
-                ),
-                _buildElevatedButton(
-                  context: context,
-                  label: 'Go to Payment',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const PaymentPage()),
-                    );
-                  },
-                ),
-                _buildElevatedButton(
-                  context: context,
-                  label: 'Go to Login',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                    );
-                  },
-                ),
-                _buildElevatedButton(
-                  context: context,
-                  label: 'Admin Menu',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdminMenuPage()),
-                    );
-                  },
-                ),
-              ],
+                  // Welcome Text
+                  const Text(
+                    'Welcome to GitsBites',
+                    style: TextStyle(
+                      fontSize: 28.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Navigation Buttons
+                  _buildElevatedButton(
+                    context: context,
+                    label: 'Go to Profile',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ProfilePage()),
+                      );
+                    },
+                  ),
+                  _buildElevatedButton(
+                    context: context,
+                    label: 'Go to Cart',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CartPage()),
+                      );
+                    },
+                  ),
+                  _buildElevatedButton(
+                    context: context,
+                    label: 'Go to Payment',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PaymentPage()),
+                      );
+                    },
+                  ),
+                  _buildElevatedButton(
+                    context: context,
+                    label: 'Go to Login',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginPage()),
+                      );
+                    },
+                  ),
+                  _buildElevatedButton(
+                    context: context,
+                    label: 'Admin Menu',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => AdminMenuPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
