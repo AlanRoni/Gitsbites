@@ -12,7 +12,12 @@
           "package_name": "com.example.gitsbites"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "524013313932-363is9hcfrml2q0pepqo5r1n78bgm2jv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDVeZu3IomnXdwZqi-h9CBrZG-NdtGB8L4"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "524013313932-363is9hcfrml2q0pepqo5r1n78bgm2jv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "524013313932-ugnunbc4me31q5natv6pqffn93596qh2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.gitsbites"
+              }
+            }
+          ]
         }
       }
     }
