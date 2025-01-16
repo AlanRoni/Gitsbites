@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
-class CartPage extends StatelessWidget {
-  // Dummy data for cart items
+class CartPage extends StatefulWidget {
+  CartPage({Key? key}) : super(key: key);
+
+  @override
+  _CartPageState createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
   final List<Map<String, dynamic>> cartItems = [
     {
       "name": "Lentil Fritters",
       "price": 10,
       "quantity": 2,
-      "image": "assets/item1.png", // Replace with actual image paths
+      "image": "assets/item1.png",
     },
     {
       "name": "Chicken Fried Rice",
@@ -29,142 +35,254 @@ class CartPage extends StatelessWidget {
     },
   ];
 
-  CartPage({super.key});
+  final List<bool> isHovered = [];
 
-  // Function to calculate total price
+  @override
+  void initState() {
+    super.initState();
+    isHovered.addAll(List<bool>.generate(cartItems.length, (_) => false));
+  }
+
   int calculateTotalPrice() {
     int total = 0;
     for (var item in cartItems) {
-      total += (item['price'] as int) *
-          (item['quantity'] as int); // Ensure both are int
+      total += (item['price'] as int) * (item['quantity'] as int);
     }
     return total;
+  }
+
+  void increaseQuantity(int index) {
+    setState(() {
+      cartItems[index]['quantity']++;
+    });
+  }
+
+  void decreaseQuantity(int index) {
+    setState(() {
+      if (cartItems[index]['quantity'] > 1) {
+        cartItems[index]['quantity']--;
+      } else {
+        cartItems.removeAt(index);
+        isHovered.removeAt(index);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cart'),
+        title: Row(
+          children: [
+            const Text('Cart'),
+            const SizedBox(width: 8),
+            const Icon(Icons.shopping_cart, size: 24),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () {
-              // Handle cart item deletion
+              setState(() {
+                cartItems.clear();
+                isHovered.clear();
+              });
             },
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // List of cart items
-          Expanded(
-            child: ListView.builder(
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        // Item image
-                        Image.asset(
-                          item["image"],
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        ),
-                        const SizedBox(width: 10),
-
-                        // Item details
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item["name"],
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text("INR ${item['price']}"),
-                            ],
-                          ),
-                        ),
-
-                        // Quantity selector
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: () {
-                                // Decrease quantity
-                              },
-                            ),
-                            Text(item["quantity"].toString()),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () {
-                                // Increase quantity
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+          // Background Image
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.1, // Adjust opacity for subtle effect
+              child: Image.asset(
+                'assets/cart_background.png', // Replace with your background image path
+                fit: BoxFit.cover,
+              ),
             ),
           ),
 
-          // Total and Payment button section
+          // Gradient and Main Content
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFA8D5A3), Colors.white],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
             child: Column(
               children: [
-                // Total amount
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Total",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "Rs. ${calculateTotalPrice()}",
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Payment button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.green,
-                    ),
-                    onPressed: () {
-                      // Navigate to payment page
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = cartItems[index];
+                      return MouseRegion(
+                        onEnter: (_) {
+                          setState(() {
+                            isHovered[index] = true;
+                          });
+                        },
+                        onExit: (_) {
+                          setState(() {
+                            isHovered[index] = false;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 16),
+                          transform: isHovered[index]
+                              ? Matrix4.diagonal3Values(1.02, 1.02, 1.0)
+                              : Matrix4.identity(),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: isHovered[index]
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    )
+                                  ]
+                                : [
+                                    BoxShadow(
+                                      color: Colors.grey.shade300,
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    item["image"],
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item["name"],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "INR ${item['price']}",
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.remove,
+                                          color: Colors.redAccent),
+                                      onPressed: () {
+                                        decreaseQuantity(index);
+                                      },
+                                    ),
+                                    Text(
+                                      item["quantity"].toString(),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon:
+                                          Icon(Icons.add, color: Colors.green),
+                                      onPressed: () {
+                                        increaseQuantity(index);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
                     },
-                    child: const Text(
-                      "Go to Payment",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFA8D5A3), Colors.white],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Total",
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            "Rs. ${calculateTotalPrice()}",
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () {
+                            // Navigate to payment page
+                          },
+                          child: const Text(
+                            "Go to Payment",
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -191,10 +309,8 @@ class CartPage extends StatelessWidget {
             label: 'Profile',
           ),
         ],
-        currentIndex: 2, // Set default selected index to Cart
-        onTap: (index) {
-          // Handle bottom navigation tap
-        },
+        currentIndex: 2,
+        onTap: (index) {},
       ),
     );
   }
