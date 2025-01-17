@@ -98,7 +98,7 @@ class _CartPageState extends State<CartPage> {
           // Background Image
           Positioned.fill(
             child: Opacity(
-              opacity: 0.1, // Adjust opacity for subtle effect
+              opacity: 0.1,
               child: Image.asset(
                 'assets/cart_background.png', // Replace with your background image path
                 fit: BoxFit.cover,
@@ -294,27 +294,34 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Cart',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: 2,
-        onTap: (index) {},
-      ),
+  type: BottomNavigationBarType.fixed, // Ensure color applies to the entire bar
+  backgroundColor: Colors.green, // Set the background color to green
+  selectedItemColor: Colors.white, // Color for the selected item
+  unselectedItemColor: Colors.white70, // Color for unselected items
+  items: const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.home),
+      label: 'Home',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.favorite_border),
+      label: 'Favorites',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.shopping_cart),
+      label: 'Cart',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person_outline),
+      label: 'Profile',
+    ),
+  ],
+  currentIndex: 2, // Ensure the Cart tab is selected
+  onTap: (index) {
+    // Handle navigation logic here
+  },
+),
+
     );
   }
 }

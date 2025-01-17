@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'bottom_nav.dart'; // Import the custom bottom navigation bar
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -117,6 +118,21 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: 3, // Set the active tab to "Profile"
+        onTap: (index) {
+          // Handle navigation to other pages
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/favorites');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/cart');
+          } else if (index == 3) {
+            Navigator.pushReplacementNamed(context, '/profile');
+          }
+        },
       ),
     );
   }
