@@ -74,16 +74,26 @@ class _CartPageState extends State<CartPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Cart'),
+            const Text(
+              'Cart',
+              style: TextStyle(color: Colors.white),
+            ),
             const SizedBox(width: 8),
-            const Icon(Icons.shopping_cart, size: 24),
+            const Icon(
+              Icons.shopping_cart,
+              size: 24,
+              color: Colors.white,
+            ),
           ],
         ),
         backgroundColor: Colors.green,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Colors.white,
+            ),
             onPressed: () {
               setState(() {
                 cartItems.clear();
@@ -98,7 +108,7 @@ class _CartPageState extends State<CartPage> {
           // Background Image
           Positioned.fill(
             child: Opacity(
-              opacity: 0.1,
+              opacity: 0.1, // Adjust opacity for subtle effect
               child: Image.asset(
                 'assets/cart_background.png', // Replace with your background image path
                 fit: BoxFit.cover,
@@ -253,7 +263,9 @@ class _CartPageState extends State<CartPage> {
                           const Text(
                             "Total",
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green),
                           ),
                           Text(
                             "Rs. ${calculateTotalPrice()}",
@@ -294,34 +306,34 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-  type: BottomNavigationBarType.fixed, // Ensure color applies to the entire bar
-  backgroundColor: Colors.green, // Set the background color to green
-  selectedItemColor: Colors.white, // Color for the selected item
-  unselectedItemColor: Colors.white70, // Color for unselected items
-  items: const [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.favorite_border),
-      label: 'Favorites',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.shopping_cart),
-      label: 'Cart',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person_outline),
-      label: 'Profile',
-    ),
-  ],
-  currentIndex: 2, // Ensure the Cart tab is selected
-  onTap: (index) {
-    // Handle navigation logic here
-  },
-),
-
+        type: BottomNavigationBarType
+            .fixed, // Ensure color applies to the entire bar
+        backgroundColor: Colors.green, // Set the background color to green
+        selectedItemColor: Colors.white, // Color for the selected item
+        unselectedItemColor: Colors.white70, // Color for unselected items
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            label: 'Favorites',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
+        currentIndex: 2, // Ensure the Cart tab is selected
+        onTap: (index) {
+          // Handle navigation logic here
+        },
+      ),
     );
   }
 }
