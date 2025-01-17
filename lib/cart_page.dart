@@ -74,16 +74,26 @@ class _CartPageState extends State<CartPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Cart'),
+            const Text(
+              'Cart',
+              style: TextStyle(color: Colors.white),
+            ),
             const SizedBox(width: 8),
-            const Icon(Icons.shopping_cart, size: 24),
+            const Icon(
+              Icons.shopping_cart,
+              size: 24,
+              color: Colors.white,
+            ),
           ],
         ),
         backgroundColor: Colors.green,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Colors.white,
+            ),
             onPressed: () {
               setState(() {
                 cartItems.clear();
@@ -110,7 +120,7 @@ class _CartPageState extends State<CartPage> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFA8D5A3), Colors.white],
+                colors: [Colors.white, Color.fromARGB(255, 198, 241, 193)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -233,7 +243,10 @@ class _CartPageState extends State<CartPage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFFA8D5A3), Colors.white],
+                      colors: [
+                        Color.fromARGB(255, 168, 230, 161),
+                        Colors.white
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -250,7 +263,9 @@ class _CartPageState extends State<CartPage> {
                           const Text(
                             "Total",
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green),
                           ),
                           Text(
                             "Rs. ${calculateTotalPrice()}",
@@ -291,6 +306,11 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType
+            .fixed, // Ensure color applies to the entire bar
+        backgroundColor: Colors.green, // Set the background color to green
+        selectedItemColor: Colors.white, // Color for the selected item
+        unselectedItemColor: Colors.white70, // Color for unselected items
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -309,8 +329,10 @@ class _CartPageState extends State<CartPage> {
             label: 'Profile',
           ),
         ],
-        currentIndex: 2,
-        onTap: (index) {},
+        currentIndex: 2, // Ensure the Cart tab is selected
+        onTap: (index) {
+          // Handle navigation logic here
+        },
       ),
     );
   }
