@@ -110,7 +110,7 @@ class _CartPageState extends State<CartPage> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFA8D5A3), Colors.white],
+                colors: [Colors.white, Color.fromARGB(255, 198, 241, 193)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -233,7 +233,10 @@ class _CartPageState extends State<CartPage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFFA8D5A3), Colors.white],
+                      colors: [
+                        Color.fromARGB(255, 168, 230, 161),
+                        Colors.white
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
