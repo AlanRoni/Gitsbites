@@ -16,6 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Kioski App',
+      debugShowCheckedModeBanner: false, // Removes the debug banner
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
