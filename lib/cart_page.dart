@@ -110,7 +110,7 @@ class _CartPageState extends State<CartPage> {
             child: Opacity(
               opacity: 0.1, // Adjust opacity for subtle effect
               child: Image.asset(
-                'assets/cart_background.png', // Replace with your background image path
+                'assets/cbgimg.png', // Replace with your background image path
                 fit: BoxFit.cover,
               ),
             ),

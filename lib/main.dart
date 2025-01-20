@@ -6,6 +6,7 @@ import 'cart_page.dart';
 import 'payment.dart';
 import 'login.dart';
 import 'admin_menu.dart';
+import 'favorites_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -118,6 +119,17 @@ class HomePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const PaymentPage()),
+                      );
+                    },
+                  ),
+                  _buildElevatedButton(
+                    context: context,
+                    label: 'Favorites',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => FavoritesPage()),
                       );
                     },
                   ),
