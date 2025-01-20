@@ -3,6 +3,7 @@ import 'cart_page.dart';
 import 'profile_page.dart';
 import 'favorites_page.dart';
 import 'bottom_nav.dart';
+import 'payment.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,8 +23,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const HomePage(),
         '/favorites': (context) => FavoritesPage(),
-        '/cart': (context) => CartPage(),
+        '/cart': (context) => const CartPage(),
         '/profile': (context) => const ProfilePage(),
+        '/payment': (context) => const PaymentPage(), // Add PaymentPage route
       },
     );
   }
@@ -79,7 +81,7 @@ class HomePage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0,
+        currentIndex: 0, // Home page is selected by default
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/home');

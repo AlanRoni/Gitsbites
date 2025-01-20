@@ -290,6 +290,7 @@ class _CartPageState extends State<CartPage> {
                           ),
                           onPressed: () {
                             // Navigate to payment page
+                            Navigator.pushNamed(context, '/payment');
                           },
                           child: const Text(
                             "Go to Payment",

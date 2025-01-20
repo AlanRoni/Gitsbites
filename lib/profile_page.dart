@@ -141,6 +141,33 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 20),
+
+                // Logout Button
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Navigate back to the Login Page
+                      Navigator.pushReplacementNamed(context, '/login');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 40),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
