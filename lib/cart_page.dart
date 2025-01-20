@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'bottom_nav.dart';
 
 class CartPage extends StatefulWidget {
-  CartPage({Key? key}) : super(key: key);
+  const CartPage({Key? key}) : super(key: key);
 
   @override
   _CartPageState createState() => _CartPageState();
@@ -74,16 +75,26 @@ class _CartPageState extends State<CartPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Cart'),
+            const Text(
+              'Cart',
+              style: TextStyle(color: Colors.white),
+            ),
             const SizedBox(width: 8),
-            const Icon(Icons.shopping_cart, size: 24),
+            const Icon(
+              Icons.shopping_cart,
+              size: 24,
+              color: Colors.white,
+            ),
           ],
         ),
         backgroundColor: Colors.green,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Colors.white,
+            ),
             onPressed: () {
               setState(() {
                 cartItems.clear();
@@ -98,19 +109,18 @@ class _CartPageState extends State<CartPage> {
           // Background Image
           Positioned.fill(
             child: Opacity(
-              opacity: 0.1, // Adjust opacity for subtle effect
+              opacity: 0.1,
               child: Image.asset(
                 'assets/cart_background.png', // Replace with your background image path
                 fit: BoxFit.cover,
               ),
             ),
           ),
-
           // Gradient and Main Content
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFA8D5A3), Colors.white],
+                colors: [Colors.white, Color.fromARGB(255, 198, 241, 193)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -233,7 +243,10 @@ class _CartPageState extends State<CartPage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFFA8D5A3), Colors.white],
+                      colors: [
+                        Color.fromARGB(255, 168, 230, 161),
+                        Colors.white
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -250,7 +263,9 @@ class _CartPageState extends State<CartPage> {
                           const Text(
                             "Total",
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green),
                           ),
                           Text(
                             "Rs. ${calculateTotalPrice()}",
@@ -275,6 +290,7 @@ class _CartPageState extends State<CartPage> {
                           ),
                           onPressed: () {
                             // Navigate to payment page
+                            Navigator.pushNamed(context, '/payment');
                           },
                           child: const Text(
                             "Go to Payment",
@@ -290,27 +306,19 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Cart',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
+      bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 2,
-        onTap: (index) {},
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/favorites');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/cart');
+          } else if (index == 3) {
+            Navigator.pushReplacementNamed(context, '/profile');
+          }
+        },
       ),
     );
   }
