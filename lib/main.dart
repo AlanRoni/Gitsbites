@@ -1,32 +1,10 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'profile_page.dart';
 import 'cart_page.dart';
-import 'payment.dart';
-import 'login.dart';
-import 'admin_menu.dart';
+import 'profile_page.dart';
 import 'favorites_page.dart';
+import 'bottom_nav.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0",
-        authDomain: "gitsbites.firebaseapp.com",
-        projectId: "gitsbites",
-        storageBucket: "gitsbites.firebasestorage.app",
-        messagingSenderId: "524013313932",
-        appId: "1:524013313932:web:7c4d7b341ce9bea77880a9",
-        measurementId: "G-C5LB4FV54D",
-      ),
-    );
-  } else {
-    await Firebase.initializeApp();
-  }
-
+void main() {
   runApp(const MyApp());
 }
 
@@ -36,12 +14,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Navigation Demo',
+      title: 'Kioski App',
       theme: ThemeData(
-        primarySwatch: Colors.teal,
+        primarySwatch: Colors.green,
       ),
-      home: const HomePage(),
+      initialRoute: '/home',
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/favorites': (context) => FavoritesPage(),
+        '/cart': (context) => CartPage(),
+        '/profile': (context) => const ProfilePage(),
+      },
     );
   }
 }
@@ -52,140 +35,62 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Color(0xFFDFF6E1)], // White to light green
-          ),
+      appBar: AppBar(
+        title: Row(
+          children: [
+            const Text(
+              'Home',
+              style: TextStyle(color: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.home,
+              size: 24,
+              color: Colors.white,
+            ),
+          ],
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  // Large Logo
-                  SizedBox(
-                    height: 200, // Larger height for the logo
-                    child: Image.asset(
-                      'assets/Logog.png',
-                      fit: BoxFit
-                          .contain, // Ensure the logo scales proportionally
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Welcome Text
-                  const Text(
-                    'Welcome to GitsBites',
-                    style: TextStyle(
-                      fontSize: 28.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Navigation Buttons
-                  _buildElevatedButton(
-                    context: context,
-                    label: 'Go to Profile',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ProfilePage()),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context: context,
-                    label: 'Go to Cart',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => CartPage()),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context: context,
-                    label: 'Go to Payment',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const PaymentPage()),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context: context,
-                    label: 'Favorites',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => FavoritesPage()),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context: context,
-                    label: 'Go to Login',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
-                      );
-                    },
-                  ),
-                  _buildElevatedButton(
-                    context: context,
-                    label: 'Admin Menu',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AdminMenuPage()),
-                      );
-                    },
-                  ),
-                ],
+        backgroundColor: Colors.green,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFA8D5A3)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // Helper to build navigation buttons
-  Widget _buildElevatedButton({
-    required BuildContext context,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
-          backgroundColor: Colors.teal.shade600,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0),
+          // Main Content
+          Center(
+            child: const Text(
+              'Welcome to Kioski App!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
           ),
-          elevation: 4.0,
-          shadowColor: Colors.teal.shade200,
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 18.0, color: Colors.white),
-        ),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/favorites');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/cart');
+          } else if (index == 3) {
+            Navigator.pushReplacementNamed(context, '/profile');
+          }
+        },
       ),
     );
   }
