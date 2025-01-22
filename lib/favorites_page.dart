@@ -20,16 +20,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
       "price": 150,
       "image": "assets/item2.png",
     },
-    {
-      "name": "Stringhoppers",
-      "price": 10,
-      "image": "assets/item3.png",
-    },
-    {
-      "name": "Chocolate Milkshake",
-      "price": 90,
-      "image": "assets/item1.png",
-    },
   ];
 
   void removeItem(int index) {

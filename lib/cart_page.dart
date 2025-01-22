@@ -22,18 +22,6 @@ class _CartPageState extends State<CartPage> {
       "quantity": 2,
       "image": "assets/item2.png",
     },
-    {
-      "name": "Stringhoppers",
-      "price": 10,
-      "quantity": 2,
-      "image": "assets/item3.png",
-    },
-    {
-      "name": "Chocolate Milkshake",
-      "price": 90,
-      "quantity": 2,
-      "image": "assets/item1.png",
-    },
   ];
 
   final List<bool> isHovered = [];
