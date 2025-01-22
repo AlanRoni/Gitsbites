@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 
 class PaymentPage extends StatefulWidget {
-  const PaymentPage({super.key});
+  final int totalAmount; // To receive the amount from CartPage
+
+  const PaymentPage({Key? key, required this.totalAmount}) : super(key: key);
+
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Payment Page'),
+        backgroundColor: Colors.green,
+      ),
+      body: Center(
+        child: Text(
+          'Total Amount: Rs. $totalAmount',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  String _selectedPaymentMethod = 'card'; // Default selection
-  String _selectedUPIApp = 'googlePay'; // Default UPI option
-  String _upiId = ''; // Store entered UPI ID
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,10 +45,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 height: 60.0,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF66BB6A),
-                      Color(0xFF43A047)
-                    ], // Green shades
+                    colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -65,7 +75,6 @@ class _PaymentPageState extends State<PaymentPage> {
                   ],
                 ),
               ),
-
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -100,7 +109,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         child: Column(
                           children: [
                             Text(
-                              '£500.00',
+                              'Rs. ${widget.totalAmount}', // Display the passed amount
                               style: TextStyle(
                                 fontSize: 36.0,
                                 fontWeight: FontWeight.bold,
@@ -121,102 +130,56 @@ class _PaymentPageState extends State<PaymentPage> {
                       ),
                       const SizedBox(height: 30.0),
 
-                      // Payment Method Section
-                      Text(
-                        'Choose Payment Method',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-
-                      // Credit/Debit Card Option
-                      _buildPaymentOption(
-                        title: 'Credit or Debit Card',
-                        value: 'card',
-                        isSelected: _selectedPaymentMethod == 'card',
-                        child: _selectedPaymentMethod == 'card'
-                            ? Column(
-                                children: [
-                                  _buildTextField('Card Number'),
-                                  const SizedBox(height: 10.0),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                          child: _buildTextField(
-                                              'Expiry Date (MM/YY)')),
-                                      const SizedBox(width: 10.0),
-                                      Expanded(child: _buildTextField('CVV')),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : null,
-                      ),
-
-                      // UPI Option
-                      _buildPaymentOption(
-                        title: 'UPI',
-                        value: 'upi',
-                        isSelected: _selectedPaymentMethod == 'upi',
-                        child: _selectedPaymentMethod == 'upi'
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Select UPI App',
-                                    style: TextStyle(
-                                        fontSize: 16.0, color: Colors.black87),
-                                  ),
-                                  _buildRadioOption('Google Pay', 'googlePay'),
-                                  _buildRadioOption('PhonePe', 'phonePe'),
-                                  _buildRadioOption('Other', 'other'),
-                                  if (_selectedUPIApp == 'other')
-                                    const SizedBox(height: 10.0),
-                                  if (_selectedUPIApp == 'other')
-                                    _buildTextField('Enter UPI ID'),
-                                ],
-                              )
-                            : null,
-                      ),
-
-                      // Cash on Delivery Option
-                      _buildPaymentOption(
-                        title: 'Cash on Delivery',
-                        value: 'cash',
-                        isSelected: _selectedPaymentMethod == 'cash',
-                      ),
-
-                      const SizedBox(height: 30.0),
-
-                      // Proceed Button
-                      ElevatedButton(
-                        onPressed: () {
-                          if (_selectedPaymentMethod == 'card') {
-                            print('Processing Card Payment');
-                          } else if (_selectedPaymentMethod == 'upi') {
-                            if (_selectedUPIApp == 'other' && _upiId.isEmpty) {
-                              print('Enter a valid UPI ID');
-                            } else {
-                              print('Processing UPI Payment');
-                            }
-                          } else if (_selectedPaymentMethod == 'cash') {
-                            print('Cash on Delivery Selected');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
-                          padding: const EdgeInsets.symmetric(vertical: 15.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
+                      // Payment Buttons Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Google Pay Button
+                          ElevatedButton(
+                            onPressed: () {
+                              print('Pay via Google Pay');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade600,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 30.0, vertical: 20.0),
+                            ),
+                            child: const Text(
+                              'Google Pay',
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Proceed to Pay',
-                          style: TextStyle(fontSize: 18.0, color: Colors.white),
-                        ),
+                          const SizedBox(width: 20.0),
+                          // Cash on Delivery Button
+                          ElevatedButton(
+                            onPressed: () {
+                              print('Cash on Delivery Selected');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green.shade600,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 30.0, vertical: 20.0),
+                            ),
+                            child: const Text(
+                              'Cash on Delivery',
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20.0),
                     ],
@@ -227,95 +190,6 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
         ),
       ),
-    );
-  }
-
-  // Helper to build payment options
-  Widget _buildPaymentOption({
-    required String title,
-    required String value,
-    required bool isSelected,
-    Widget? child,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPaymentMethod = value;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.green.shade50 : Colors.white,
-          borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(
-            color: isSelected ? Colors.green.shade600 : Colors.green.shade200,
-            width: 2.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8.0,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
-                color: Colors.green.shade800,
-              ),
-            ),
-            if (child != null) const SizedBox(height: 10.0),
-            if (child != null) child,
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Helper to build text fields
-  Widget _buildTextField(String label) {
-    return TextField(
-      onChanged: (value) {
-        if (label == 'Enter UPI ID') {
-          setState(() {
-            _upiId = value;
-          });
-        }
-      },
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.grey),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-      ),
-    );
-  }
-
-  // Helper to build UPI radio options
-  Widget _buildRadioOption(String title, String value) {
-    return ListTile(
-      leading: Radio<String>(
-        value: value,
-        groupValue: _selectedUPIApp,
-        onChanged: (String? value) {
-          setState(() {
-            _selectedUPIApp = value!;
-          });
-        },
-        activeColor: Colors.green,
-      ),
-      title: Text(title, style: const TextStyle(color: Colors.black87)),
     );
   }
 }
