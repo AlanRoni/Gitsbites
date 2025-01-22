@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
         '/favorites': (context) => FavoritesPage(),
         '/cart': (context) => const CartPage(),
         '/profile': (context) => const ProfilePage(),
-        '/payment': (context) => PaymentPage(totalAmount: 0), // Replace 0 with the actual total amount
+        '/payment': (context) => PaymentPage(totalAmount: 0),
       },
     );
   }
@@ -71,32 +71,43 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
-  void toggleFavorite(int index) {
-    setState(() {
-      menuItems[index]['isFavorite'] = !menuItems[index]['isFavorite'];
-    });
-  }
+  final List<Map<String, dynamic>> favoriteItems = [];
 
-  void toggleCart(int index) {
-    setState(() {
-      menuItems[index]['inCart'] = !menuItems[index]['inCart'];
-    });
+  void toggleFavorite(int index) {
+    final item = menuItems[index];
+
+    // Check if item is already in the favorites
+    final existingIndex = favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
+    if (existingIndex != -1) {
+      // Show popup if item is already in the favorites
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("The item is already in the favorites!"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Add to favorites and update the heart icon
+      setState(() {
+        item['isFavorite'] = true;
+        favoriteItems.add(item);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("${item['name']} added to favorites!"),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Menu',
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
+        title: const Text('Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
-        elevation: 0,
       ),
       body: Stack(
         children: [
@@ -110,150 +121,84 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Menu Content
-          Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: menuItems.length,
-                  itemBuilder: (context, index) {
-                    final item = menuItems[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+          // Menu Items
+          ListView.builder(
+            itemCount: menuItems.length,
+            itemBuilder: (context, index) {
+              final item = menuItems[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 5,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          item["image"],
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                item["image"],
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
+                            Text(
+                              item["name"],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item["name"],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "INR ${item['price']}",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(height: 4),
+                            Text(
+                              "INR ${item['price']}",
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
                               ),
-                            ),
-                            Row(
-                              children: [
-                                // Add to Cart Button with Animation
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  transitionBuilder: (child, animation) {
-                                    return ScaleTransition(
-                                      scale: animation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: IconButton(
-                                    key: ValueKey<bool>(
-                                        item['inCart'] as bool),
-                                    icon: Icon(
-                                      item['inCart']
-                                          ? Icons.shopping_cart
-                                          : Icons.add_shopping_cart,
-                                      color: item['inCart']
-                                          ? Colors.green
-                                          : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      toggleCart(index);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            item['inCart']
-                                                ? '${item["name"]} added to cart!'
-                                                : '${item["name"]} removed from cart!',
-                                          ),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                // Add to Favorites Button with Animation
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  transitionBuilder: (child, animation) {
-                                    return ScaleTransition(
-                                      scale: animation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: IconButton(
-                                    key: ValueKey<bool>(
-                                        item['isFavorite'] as bool),
-                                    icon: Icon(
-                                      item['isFavorite']
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: item['isFavorite']
-                                          ? Colors.red
-                                          : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      toggleFavorite(index);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            item['isFavorite']
-                                                ? '${item["name"]} added to favorites!'
-                                                : '${item["name"]} removed from favorites!',
-                                          ),
-                                          duration:
-                                              const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
                       ),
-                    );
-                  },
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              item['isFavorite']
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: item['isFavorite'] ? Colors.red : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleFavorite(index);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0, // Home page is selected by default
+        currentIndex: 0,
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites');
+            Navigator.pushReplacementNamed(context, '/favorites',
+                arguments: favoriteItems);
           } else if (index == 2) {
             Navigator.pushReplacementNamed(context, '/cart');
           } else if (index == 3) {
