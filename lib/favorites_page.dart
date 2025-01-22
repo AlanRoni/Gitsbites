@@ -20,16 +20,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
       "price": 150,
       "image": "assets/item2.png",
     },
-    {
-      "name": "Stringhoppers",
-      "price": 10,
-      "image": "assets/item3.png",
-    },
-    {
-      "name": "Chocolate Milkshake",
-      "price": 90,
-      "image": "assets/item1.png",
-    },
   ];
 
   void removeItem(int index) {
@@ -42,64 +32,82 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favorites'),
+        title: const Text(
+          'Favorites',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.green,
       ),
-      body: ListView.builder(
-        itemCount: favoriteItems.length,
-        itemBuilder: (context, index) {
-          final item = favoriteItems[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            elevation: 5,
-            child: ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  item["image"],
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                ),
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFA8D5A3)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              title: Text(item["name"]),
-              subtitle: Text("INR ${item['price']}"),
-              trailing: IconButton(
-                icon: const Icon(Icons.favorite, color: Colors.red),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text("Remove Item"),
-                        content: const Text(
-                            "Are you sure you want to remove this item?"),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text("No"),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              removeItem(index);
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text("Yes"),
-                          ),
-                        ],
+            ),
+          ),
+          // Main Content
+          ListView.builder(
+            itemCount: favoriteItems.length,
+            itemBuilder: (context, index) {
+              final item = favoriteItems[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 5,
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      item["image"],
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  title: Text(item["name"]),
+                  subtitle: Text("INR ${item['price']}"),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.favorite, color: Colors.red),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Remove Item"),
+                            content: const Text(
+                                "Are you sure you want to remove this item?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text("No"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  removeItem(index);
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text("Yes"),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            ),
-          );
-        },
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 1,
