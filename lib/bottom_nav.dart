@@ -17,7 +17,7 @@ class CustomBottomNavBar extends StatelessWidget {
       backgroundColor: Colors.green, // Set background color
       selectedItemColor: Colors.white, // Color for selected item
       unselectedItemColor: Colors.white70, // Color for unselected items
-      currentIndex: currentIndex, // The active tab index
+      currentIndex: currentIndex, // Set the active tab index
       onTap: onTap, // Callback for tab changes
       items: const [
         BottomNavigationBarItem(
