@@ -3,7 +3,6 @@ import 'cart_page.dart';
 import 'profile_page.dart';
 import 'favorites_page.dart';
 import 'bottom_nav.dart';
-import 'payment.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,17 +15,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Kioski App',
-      debugShowCheckedModeBanner: false, // Removes the debug banner
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      initialRoute: '/home',
+      initialRoute: '/', // Set initial route
       routes: {
+        '/': (context) => const HomePage(),
         '/home': (context) => const HomePage(),
         '/favorites': (context) => FavoritesPage(),
         '/cart': (context) => const CartPage(),
         '/profile': (context) => const ProfilePage(),
-        '/payment': (context) => const PaymentPage(), // Add PaymentPage route
       },
     );
   }
@@ -39,60 +38,22 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Home',
-              style: TextStyle(color: Colors.white),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.home,
-              size: 24,
-              color: Colors.white,
-            ),
-          ],
-        ),
+        title: const Text('Home'),
         backgroundColor: Colors.green,
-        elevation: 0,
       ),
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white, Color(0xFFA8D5A3)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          // Main Content
-          Center(
-            child: const Text(
-              'Welcome to Kioski App!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-          ),
-        ],
+      body: const Center(
+        child: Text(
+          'Welcome to Kioski App!',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0, // Home page is selected by default
+        currentIndex: 0,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
-          } else if (index == 3) {
-            Navigator.pushReplacementNamed(context, '/profile');
-          }
+          if (index == 0) Navigator.pushNamed(context, '/home');
+          if (index == 1) Navigator.pushNamed(context, '/favorites');
+          if (index == 2) Navigator.pushNamed(context, '/cart');
+          if (index == 3) Navigator.pushNamed(context, '/profile');
         },
       ),
     );
