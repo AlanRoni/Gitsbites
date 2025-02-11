@@ -3,7 +3,7 @@ import 'payment.dart';
 import 'bottom_nav.dart';
 
 class CartPage extends StatefulWidget {
-  const CartPage({Key? key}) : super(key: key);
+  const CartPage({super.key});
 
   @override
   _CartPageState createState() => _CartPageState();
@@ -61,7 +61,6 @@ class _CartPageState extends State<CartPage> {
       ),
       body: Stack(
         children: [
-          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -73,7 +72,6 @@ class _CartPageState extends State<CartPage> {
           ),
           Column(
             children: [
-              // Cart Items List
               Expanded(
                 child: ListView.builder(
                   itemCount: cartItems.length,
@@ -81,7 +79,7 @@ class _CartPageState extends State<CartPage> {
                     final item = cartItems[index];
                     return Container(
                       margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8), // Add spacing
+                          horizontal: 16, vertical: 8),
                       padding: const EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -96,7 +94,6 @@ class _CartPageState extends State<CartPage> {
                       ),
                       child: Row(
                         children: [
-                          // Item Image
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.asset(
@@ -107,8 +104,6 @@ class _CartPageState extends State<CartPage> {
                             ),
                           ),
                           const SizedBox(width: 16),
-
-                          // Item Details
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +111,8 @@ class _CartPageState extends State<CartPage> {
                                 Text(
                                   item['name'],
                                   style: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.bold),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -129,13 +125,12 @@ class _CartPageState extends State<CartPage> {
                               ],
                             ),
                           ),
-
-                          // Quantity Controls
                           Row(
                             children: [
                               IconButton(
                                 onPressed: () => decreaseQuantity(index),
-                                icon: const Icon(Icons.remove, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.remove, color: Colors.red),
                               ),
                               Text(
                                 item['quantity'].toString(),
@@ -144,7 +139,8 @@ class _CartPageState extends State<CartPage> {
                               ),
                               IconButton(
                                 onPressed: () => increaseQuantity(index),
-                                icon: const Icon(Icons.add, color: Colors.green),
+                                icon:
+                                    const Icon(Icons.add, color: Colors.green),
                               ),
                             ],
                           ),
@@ -154,8 +150,6 @@ class _CartPageState extends State<CartPage> {
                   },
                 ),
               ),
-
-              // Total Price and Enhanced Button with Gradient
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
@@ -201,6 +195,7 @@ class _CartPageState extends State<CartPage> {
                           MaterialPageRoute(
                             builder: (context) => PaymentPage(
                               totalAmount: calculateTotalPrice(),
+                              cartItems: List.from(cartItems), // Pass items
                             ),
                           ),
                         );

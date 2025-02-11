@@ -15,20 +15,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kioski App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      initialRoute: '/home',
-      routes: {
-        '/home': (context) => const HomePage(),
-        '/favorites': (context) => FavoritesPage(),
-        '/cart': (context) => const CartPage(),
-        '/profile': (context) => const ProfilePage(),
-        '/payment': (context) => PaymentPage(totalAmount: 0),
-      },
-    );
+        title: 'Kioski App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+        ),
+        initialRoute: '/home',
+        routes: {
+          '/home': (context) => const HomePage(),
+          '/favorites': (context) => const FavoritesPage(),
+          '/cart': (context) => const CartPage(),
+          '/profile': (context) => const ProfilePage(),
+          '/payment': (context) =>
+              const PaymentPage(totalAmount: 0, cartItems: []),
+        });
   }
 }
 
@@ -77,7 +77,8 @@ class _HomePageState extends State<HomePage> {
     final item = menuItems[index];
 
     // Check if item is already in the favorites
-    final existingIndex = favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
+    final existingIndex =
+        favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
     if (existingIndex != -1) {
       // Show popup if item is already in the favorites
       ScaffoldMessenger.of(context).showSnackBar(
@@ -175,7 +176,8 @@ class _HomePageState extends State<HomePage> {
                               item['isFavorite']
                                   ? Icons.favorite
                                   : Icons.favorite_border,
-                              color: item['isFavorite'] ? Colors.red : Colors.grey,
+                              color:
+                                  item['isFavorite'] ? Colors.red : Colors.grey,
                             ),
                             onPressed: () {
                               toggleFavorite(index);
