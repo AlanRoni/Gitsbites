@@ -4,6 +4,7 @@ import 'profile_page.dart';
 import 'favorites_page.dart';
 import 'bottom_nav.dart';
 import 'payment.dart';
+import 'preorder1.dart'; // Added import for preorder1.dart
 
 void main() {
   runApp(const MyApp());
@@ -26,8 +27,8 @@ class MyApp extends StatelessWidget {
           '/favorites': (context) => const FavoritesPage(),
           '/cart': (context) => const CartPage(),
           '/profile': (context) => const ProfilePage(),
-          '/payment': (context) =>
-              const PaymentPage(totalAmount: 0, cartItems: []),
+          '/payment': (context) => const PaymentPage(totalAmount: 0, cartItems: []),
+          '/preorder': (context) => const PreOrderPage(), // Added PreOrderPage route
         });
   }
 }
@@ -76,11 +77,8 @@ class _HomePageState extends State<HomePage> {
   void toggleFavorite(int index) {
     final item = menuItems[index];
 
-    // Check if item is already in the favorites
-    final existingIndex =
-        favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
+    final existingIndex = favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
     if (existingIndex != -1) {
-      // Show popup if item is already in the favorites
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("The item is already in the favorites!"),
@@ -88,7 +86,6 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     } else {
-      // Add to favorites and update the heart icon
       setState(() {
         item['isFavorite'] = true;
         favoriteItems.add(item);
@@ -112,7 +109,6 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: [
-          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -122,9 +118,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Menu Items
           ListView.builder(
             itemCount: menuItems.length,
+            padding: const EdgeInsets.only(bottom: 80),
             itemBuilder: (context, index) {
               final item = menuItems[index];
               return Card(
@@ -169,27 +165,47 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              item['isFavorite']
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color:
-                                  item['isFavorite'] ? Colors.red : Colors.grey,
-                            ),
-                            onPressed: () {
-                              toggleFavorite(index);
-                            },
-                          ),
-                        ],
+                      IconButton(
+                        icon: Icon(
+                          item['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                          color: item['isFavorite'] ? Colors.red : Colors.grey,
+                        ),
+                        onPressed: () {
+                          toggleFavorite(index);
+                        },
                       ),
                     ],
                   ),
                 ),
               );
             },
+          ),
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/preorder'); // Navigates to PreOrderPage
+                },
+                child: const Text(
+                  'PRE-ORDER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -199,8 +215,7 @@ class _HomePageState extends State<HomePage> {
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites',
-                arguments: favoriteItems);
+            Navigator.pushReplacementNamed(context, '/favorites', arguments: favoriteItems);
           } else if (index == 2) {
             Navigator.pushReplacementNamed(context, '/cart');
           } else if (index == 3) {
