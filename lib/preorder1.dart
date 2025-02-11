@@ -7,12 +7,12 @@ class PreOrderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pre-Order', style: TextStyle(color: Colors.white),),
+        title: const Text('Pre-Order', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
       body: Stack(
         children: [
-          // Gradient Background
+          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -26,41 +26,59 @@ class PreOrderPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildGreenButton(context, "Breakfast"),
-                const SizedBox(height: 20),
-                _buildGreenButton(context, "Lunch"),
+                // Breakfast Button
+                SizedBox(
+                  width: 200, // Ensures both buttons have the same size
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/breakfast'); // Navigate to Breakfast Page
+                    },
+                    child: const Text(
+                      'BREAKFAST',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // Spacing between buttons
+                // Lunch Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/lunch'); // Navigate to Lunch Page
+                    },
+                    child: const Text(
+                      'LUNCH',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGreenButton(BuildContext context, String label) {
-    return SizedBox(
-      width: 200, // Fixed width for uniform size
-      height: 60, // Fixed height for uniform size
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green, // Solid green color
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$label selected")),
-          );
-        },
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // White text for contrast
-          ),
-        ),
       ),
     );
   }

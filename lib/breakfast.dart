@@ -1,80 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:gitsbites/breakfast.dart';
-import 'package:gitsbites/lunch.dart';
 import 'cart_page.dart';
 import 'profile_page.dart';
 import 'favorites_page.dart';
 import 'bottom_nav.dart';
 import 'payment.dart';
-import 'preorder1.dart'; 
 
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BreakfastPage extends StatefulWidget {
+  const BreakfastPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-        title: 'Kioski App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green,
-        ),
-        initialRoute: '/home',
-        routes: {
-          '/home': (context) => const HomePage(),
-          '/favorites': (context) => const FavoritesPage(),
-          '/cart': (context) => const CartPage(),
-          '/profile': (context) => const ProfilePage(),
-          '/payment': (context) => const PaymentPage(totalAmount: 0, cartItems: []),
-          '/preorder': (context) => const PreOrderPage(), 
-          '/breakfast': (context) => const BreakfastPage(),
-          '/lunch': (context) => const LunchPage(),
-        });
-  }
+  _BreakfastPageState createState() => _BreakfastPageState();
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
+class _BreakfastPageState extends State<BreakfastPage> {
   final List<Map<String, dynamic>> menuItems = [
     {
-      "name": "Lentil Fritters",
-      "price": 10,
-      "image": "assets/item1.png",
+      "name": "Puttu",
+      "price": 50,
+      "image": "assets/item4.png",
       "isFavorite": false,
       "inCart": false,
     },
     {
-      "name": "Chicken Fried Rice",
-      "price": 150,
-      "image": "assets/item2.png",
+      "name": "Idli",
+      "price": 40,
+      "image": "assets/item5.png",
       "isFavorite": false,
       "inCart": false,
     },
-    {
-      "name": "Stringhoppers",
-      "price": 10,
-      "image": "assets/item3.png",
-      "isFavorite": false,
-      "inCart": false,
-    },
-    {
-      "name": "Chocolate Milkshake",
-      "price": 90,
-      "image": "assets/item1.png",
-      "isFavorite": false,
-      "inCart": false,
-    },
+    
+    
   ];
 
   final List<Map<String, dynamic>> favoriteItems = [];
@@ -109,7 +64,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Menu', style: TextStyle(color: Colors.white)),
+        title: const Text('Breakfast Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
       body: Stack(
@@ -184,33 +139,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               );
             },
-          ),
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/preorder'); // Navigates to PreOrderPage
-                },
-                child: const Text(
-                  'PRE-ORDER',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
