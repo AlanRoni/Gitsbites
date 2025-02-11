@@ -15,20 +15,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kioski App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      initialRoute: '/home',
-      routes: {
-        '/home': (context) => const HomePage(),
-        '/favorites': (context) => FavoritesPage(),
-        '/cart': (context) => const CartPage(),
-        '/profile': (context) => const ProfilePage(),
-        '/payment': (context) => PaymentPage(totalAmount: 0),
-      },
-    );
+        title: 'Kioski App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+        ),
+        initialRoute: '/home',
+        routes: {
+          '/home': (context) => const HomePage(),
+          '/favorites': (context) => const FavoritesPage(),
+          '/cart': (context) => const CartPage(),
+          '/profile': (context) => const ProfilePage(),
+          '/payment': (context) =>
+              const PaymentPage(totalAmount: 0, cartItems: []),
+        });
   }
 }
 
@@ -72,13 +72,13 @@ class _HomePageState extends State<HomePage> {
   ];
 
   final List<Map<String, dynamic>> favoriteItems = [];
-  final List<Map<String, dynamic>> cartItems = [];
 
   void toggleFavorite(int index) {
     final item = menuItems[index];
 
     // Check if item is already in the favorites
-    final existingIndex = favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
+    final existingIndex =
+        favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
     if (existingIndex != -1) {
       // Show popup if item is already in the favorites
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,42 +103,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void toggleCart(int index) {
-    final item = menuItems[index];
-
-    // Check if the item is already in the cart
-    final existingIndex = cartItems.indexWhere((cartItem) => cartItem['name'] == item['name']);
-    if (existingIndex != -1) {
-      // Show popup if item is already in the cart
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("The item is already in the cart!"),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      // Add to cart and update the cart icon
-      setState(() {
-        item['inCart'] = true;
-        cartItems.add({...item, "quantity": 1}); // Add a "quantity" field
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("${item['name']} added to cart!"),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
-        elevation: 0,
       ),
       body: Stack(
         children: [
@@ -203,19 +173,11 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           IconButton(
                             icon: Icon(
-                              item['inCart'] ? Icons.shopping_cart : Icons.add_shopping_cart,
-                              color: item['inCart'] ? Colors.green : Colors.grey,
-                            ),
-                            onPressed: () {
-                              toggleCart(index);
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(
                               item['isFavorite']
                                   ? Icons.favorite
                                   : Icons.favorite_border,
-                              color: item['isFavorite'] ? Colors.red : Colors.grey,
+                              color:
+                                  item['isFavorite'] ? Colors.red : Colors.grey,
                             ),
                             onPressed: () {
                               toggleFavorite(index);
@@ -240,8 +202,7 @@ class _HomePageState extends State<HomePage> {
             Navigator.pushReplacementNamed(context, '/favorites',
                 arguments: favoriteItems);
           } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart',
-                arguments: cartItems);
+            Navigator.pushReplacementNamed(context, '/cart');
           } else if (index == 3) {
             Navigator.pushReplacementNamed(context, '/profile');
           }
