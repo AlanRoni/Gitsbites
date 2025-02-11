@@ -280,7 +280,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     borderRadius: pw.BorderRadius.circular(8),
                     color: PdfColors.green,
                   ),
-                  child: pw.Text("PAID",
+                  child: pw.Text("To be Paid at Delivery",
                       style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: 14,
