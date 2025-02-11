@@ -245,38 +245,136 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   // **Generate Receipt PDF**
+  // **Generate Professional Receipt PDF**
   Future<void> _generateReceipt(
       int amount, List<Map<String, dynamic>> cartItems) async {
     final pdf = pw.Document();
 
     pdf.addPage(
       pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text("Payment Receipt",
-                style:
-                    pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 10),
-            pw.Text("Transaction ID: #554732223687",
-                style: pw.TextStyle(fontSize: 14)),
-            pw.SizedBox(height: 10),
-            pw.Text("Payment Method: Cash on Delivery",
-                style: pw.TextStyle(fontSize: 14)),
-            pw.SizedBox(height: 10),
-            pw.Text("Total Amount: Rs. $amount",
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            // **Header**
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text("GitsBites",
+                        style: pw.TextStyle(
+                            fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                    pw.Text("Payment Receipt",
+                        style: pw.TextStyle(
+                            fontSize: 18,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.grey700)),
+                  ],
+                ),
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    borderRadius: pw.BorderRadius.circular(8),
+                    color: PdfColors.green,
+                  ),
+                  child: pw.Text("PAID",
+                      style: pw.TextStyle(
+                          color: PdfColors.white,
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold)),
+                ),
+              ],
+            ),
+
             pw.SizedBox(height: 20),
-            pw.Text("Purchased Items:",
+
+            // **Transaction Details**
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: pw.BorderRadius.circular(8),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _buildTransactionDetail("Transaction ID:", "#554732223687"),
+                  _buildTransactionDetail(
+                      "Payment Method:", "Cash on Delivery"),
+                  _buildTransactionDetail("Date:", _getCurrentDate()),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 20),
+
+            // **Purchased Items Table**
+            pw.Text("Purchased Items",
                 style:
                     pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+
             pw.SizedBox(height: 10),
-            ...cartItems.map((item) => pw.Text(
-                "${item['name']} x${item['quantity']} - Rs. ${item['price'] * item['quantity']}")),
+
+            pw.Table.fromTextArray(
+              headers: ["Item", "Qty", "Price (Rs)"],
+              data: cartItems
+                  .map((item) => [
+                        item['name'],
+                        item['quantity'].toString(),
+                        (item['price'] * item['quantity']).toString()
+                      ])
+                  .toList(),
+              border: pw.TableBorder.all(color: PdfColors.grey300),
+              headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+              headerDecoration: pw.BoxDecoration(color: PdfColors.green),
+              cellHeight: 30,
+              cellAlignments: {
+                0: pw.Alignment.centerLeft,
+                1: pw.Alignment.center,
+                2: pw.Alignment.centerRight,
+              },
+            ),
+
             pw.SizedBox(height: 20),
-            pw.Text("Thank you for your purchase!",
-                style: pw.TextStyle(fontSize: 16)),
+
+            // **Total Amount**
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.green,
+                borderRadius: pw.BorderRadius.circular(8),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Total Amount",
+                      style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white)),
+                  pw.Text("Rs. $amount",
+                      style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white)),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 30),
+
+            // **Thank You Message**
+            pw.Center(
+              child: pw.Text("Thank you for shopping with GitsBites!",
+                  style: pw.TextStyle(
+                      fontSize: 14,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.grey700)),
+            ),
           ],
         ),
       ),
@@ -292,5 +390,27 @@ class _PaymentPageState extends State<PaymentPage> {
         ..click();
       html.Url.revokeObjectUrl(url);
     }
+  }
+
+  // **Helper Method: Build Transaction Detail Row**
+  pw.Widget _buildTransactionDetail(String title, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 3),
+      child: pw.Row(
+        children: [
+          pw.Text(title,
+              style:
+                  pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.SizedBox(width: 8),
+          pw.Text(value, style: pw.TextStyle(fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  // **Helper Method: Get Current Date**
+  String _getCurrentDate() {
+    final now = DateTime.now();
+    return "${now.day}/${now.month}/${now.year}";
   }
 }
