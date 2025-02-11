@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -19,7 +21,8 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!email.endsWith('@saintgits.org')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: Email must end with @saintgits.org')),
+        const SnackBar(
+            content: Text('Error: Email must end with @saintgits.org')),
       );
       return;
     }
@@ -30,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text.trim(),
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login Successful!')),
+        const SnackBar(content: Text('Login Successful!')),
       );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (googleUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google Sign-In cancelled.')),
+          const SnackBar(content: Text('Google Sign-In cancelled.')),
         );
         return;
       }
@@ -92,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               // Central Logo Section
               Padding(
-                padding: EdgeInsets.only(top: 50, bottom: 30),
+                padding: const EdgeInsets.only(top: 50, bottom: 30),
                 child: Center(
                   child: Image.asset(
                     'assets/Logog.png',
@@ -103,11 +106,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
               // Welcome Text
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Welcome back!',
                       style: TextStyle(
                         fontSize: 28,
@@ -115,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.black87,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     Text(
                       'Log in to your account',
                       style: TextStyle(
@@ -126,19 +129,19 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               // Input Fields
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   children: [
                     // Email Field
                     TextField(
                       controller: _emailController,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email, color: Colors.grey),
+                        prefixIcon: const Icon(Icons.email, color: Colors.grey),
                         labelText: 'Email',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                         ),
@@ -148,16 +151,17 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 15),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 15),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     // Password Field
                     TextField(
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                        prefixIcon: const Icon(Icons.lock, color: Colors.grey),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordVisible
@@ -172,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         labelText: 'Password',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                         ),
@@ -182,16 +186,17 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 15),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 15),
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {},
-                        child: Text(
+                        child: const Text(
                           'Forgot password?',
                           style: TextStyle(
                             color: Colors.blue,
@@ -203,10 +208,10 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Login Button
               Padding(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                     horizontal: 80), // Shortened button width
                 child: ElevatedButton(
                   onPressed: _login,
@@ -215,11 +220,11 @@ class _LoginPageState extends State<LoginPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shadowColor: Colors.grey.shade200,
                     elevation: 8,
                   ),
-                  child: Text(
+                  child: const Text(
                     'Login',
                     style: TextStyle(
                       color: Colors.white,
@@ -229,13 +234,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               // Signup Section
               Center(
                 child: GestureDetector(
                   onTap: _signInWithGoogle, // Trigger Google Sign-In
                   child: RichText(
-                    text: TextSpan(
+                    text: const TextSpan(
                       text: "Don’t have an account? ",
                       style: TextStyle(
                         color: Colors.grey,
@@ -255,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
             ],
           ),
         ),

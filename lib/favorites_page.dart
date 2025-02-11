@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'bottom_nav.dart';
 
 class FavoritesPage extends StatefulWidget {
-  FavoritesPage({Key? key}) : super(key: key);
+  const FavoritesPage({super.key});
 
   @override
   _FavoritesPageState createState() => _FavoritesPageState();
