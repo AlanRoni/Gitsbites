@@ -20,6 +20,10 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
+  String? selectedPaymentMethod;
+  bool isHoveredGooglePay = false;
+  bool isHoveredCOD = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,23 +126,44 @@ class _PaymentPageState extends State<PaymentPage> {
                 children: [
                   _buildPaymentMethod(
                     icon: Icons.account_balance_wallet,
-                    title: "Google Pay",
-                    subtitle: "Pay securely via Google Pay",
+                    title: "UPI Payment",
+                    subtitle: "Pay securely via UPI",
                     color: Colors.blue.shade600,
                     onTap: () {
-                      print('Pay via Google Pay');
+                      setState(() {
+                        selectedPaymentMethod = 'Google Pay';
+                      });
                     },
+                    isDisabled: selectedPaymentMethod != null &&
+                        selectedPaymentMethod != 'Google Pay',
+                    isHovered: isHoveredGooglePay,
+                    onHover: (isHovered) {
+                      setState(() {
+                        isHoveredGooglePay = isHovered;
+                      });
+                    },
+                    isSelected: selectedPaymentMethod == 'Google Pay',
                   ),
                   const SizedBox(height: 12.0),
                   _buildPaymentMethod(
                     icon: Icons.money,
-                    title: "Cash on Delivery",
-                    subtitle: "Pay with cash upon delivery",
+                    title: "Cash Payment",
+                    subtitle: "Pay with cash",
                     color: Colors.green.shade700,
-                    onTap: () async {
-                      await _generateReceipt(
-                          widget.totalAmount, widget.cartItems);
+                    onTap: () {
+                      setState(() {
+                        selectedPaymentMethod = 'Cash on Delivery';
+                      });
                     },
+                    isDisabled: selectedPaymentMethod != null &&
+                        selectedPaymentMethod != 'Cash on Delivery',
+                    isHovered: isHoveredCOD,
+                    onHover: (isHovered) {
+                      setState(() {
+                        isHoveredCOD = isHovered;
+                      });
+                    },
+                    isSelected: selectedPaymentMethod == 'Cash on Delivery',
                   ),
                 ],
               ),
@@ -147,8 +172,47 @@ class _PaymentPageState extends State<PaymentPage> {
 
               // **Confirm Payment Button**
               GestureDetector(
-                onTap: () {
-                  print('Payment Confirmed');
+                onTap: () async {
+                  if (selectedPaymentMethod != null) {
+                    await _generateReceipt(
+                        widget.totalAmount, widget.cartItems);
+
+                    // Show Thank You Message
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Thank You!'),
+                        content: const Text('Your order has been confirmed.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context); // Close dialog
+                              Navigator.pop(
+                                  context); // Navigate back to home page
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    // Show error message if no payment method is selected
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Error'),
+                        content: const Text('Please select a payment method.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context); // Close dialog
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 },
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -194,51 +258,77 @@ class _PaymentPageState extends State<PaymentPage> {
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    required bool isDisabled,
+    required bool isHovered,
+    required Function(bool) onHover,
+    required bool isSelected,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12.withOpacity(0.1),
-              blurRadius: 6.0,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: color.withOpacity(0.2),
-              radius: 22,
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 15.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+    return MouseRegion(
+      onEnter: (_) => onHover(true),
+      onExit: (_) => onHover(false),
+      child: GestureDetector(
+        onTap: isDisabled ? null : onTap,
+        child: AbsorbPointer(
+          absorbing: isDisabled,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+            decoration: BoxDecoration(
+              color:
+                  isHovered || isSelected ? Colors.grey.shade100 : Colors.white,
+              borderRadius: BorderRadius.circular(12.0),
+              boxShadow: [
+                if (isSelected)
+                  BoxShadow(
+                    color: color.withOpacity(0.6),
+                    blurRadius: 10.0,
+                    offset: const Offset(0, 4),
+                  )
+                else
+                  BoxShadow(
+                    color: Colors.black12.withOpacity(0.1),
+                    blurRadius: 6.0,
+                    offset: const Offset(0, 3),
                   ),
+              ],
+              border: isHovered || isSelected
+                  ? Border.all(color: color, width: 2.0)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: color.withOpacity(0.2),
+                  radius: 22,
+                  child: Icon(icon, color: color, size: 24),
                 ),
-                const SizedBox(height: 4.0),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 13.0, color: Colors.black54),
+                const SizedBox(width: 15.0),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
                 ),
+                const Spacer(),
+                if (isSelected)
+                  Icon(Icons.check_circle, color: color, size: 24),
               ],
             ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
+          ),
         ),
       ),
     );
@@ -280,7 +370,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     borderRadius: pw.BorderRadius.circular(8),
                     color: PdfColors.green,
                   ),
-                  child: pw.Text("To be Paid at Delivery",
+                  child: pw.Text("To be Paid at Counter",
                       style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: 14,
@@ -330,7 +420,7 @@ class _PaymentPageState extends State<PaymentPage> {
               border: pw.TableBorder.all(color: PdfColors.grey300),
               headerStyle: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-              headerDecoration: pw.BoxDecoration(color: PdfColors.green),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.green),
               cellHeight: 30,
               cellAlignments: {
                 0: pw.Alignment.centerLeft,
@@ -402,7 +492,7 @@ class _PaymentPageState extends State<PaymentPage> {
               style:
                   pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
           pw.SizedBox(width: 8),
-          pw.Text(value, style: pw.TextStyle(fontSize: 14)),
+          pw.Text(value, style: const pw.TextStyle(fontSize: 14)),
         ],
       ),
     );

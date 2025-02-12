@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'bottom_nav.dart';
-import 'favorites_page.dart';
-import 'cart_page.dart';
-import 'profile_page.dart';
 
 class LunchPage extends StatefulWidget {
   const LunchPage({super.key});

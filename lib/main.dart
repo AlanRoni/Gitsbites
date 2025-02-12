@@ -21,7 +21,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
-    options: FirebaseOptions(
+    options: const FirebaseOptions(
       apiKey: 'AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0',
       authDomain: 'gitsbites.firebaseapp.com',
       projectId: 'gitsbites',
@@ -32,7 +32,7 @@ void main() async {
     ),
   );
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -110,9 +110,10 @@ class HomePage extends StatelessWidget {
                   color: Colors.green,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                leftChevronIcon:
+                    const Icon(Icons.chevron_left, color: Colors.white),
                 rightChevronIcon:
-                    Icon(Icons.chevron_right, color: Colors.white),
+                    const Icon(Icons.chevron_right, color: Colors.white),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
                 weekdayStyle: TextStyle(color: Colors.green.shade700),
@@ -139,15 +140,15 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
             Icon(
               Icons.home, // Using the home icon for the logo
               size: 24, // Adjust the size of the logo
               color: Colors.white,
             ),
-            const SizedBox(width: 8), // Space between the logo and title
-            const Text('Home', style: TextStyle(color: Colors.white)),
+            SizedBox(width: 8), // Space between the logo and title
+            Text('Home', style: TextStyle(color: Colors.white)),
           ],
         ),
         backgroundColor: Colors.green,
