@@ -10,20 +10,22 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  final List<Map<String, dynamic>> cartItems = [
-    {
-      "name": "Lentil Fritters",
-      "price": 10,
-      "quantity": 2,
-      "image": "assets/item1.png",
-    },
-    {
-      "name": "Chicken Fried Rice",
-      "price": 150,
-      "quantity": 2,
-      "image": "assets/item2.png",
-    },
-  ];
+  // This will hold the list of cart items passed as arguments
+  List<Map<String, dynamic>> cartItems = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Retrieve the cart items passed as arguments
+    final List<Map<String, dynamic>>? newCartItems =
+        ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>?;
+
+    if (newCartItems != null) {
+      setState(() {
+        cartItems = newCartItems;
+      });
+    }
+  }
 
   int calculateTotalPrice() {
     int total = 0;
@@ -73,82 +75,91 @@ class _CartPageState extends State<CartPage> {
           Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  itemCount: cartItems.length,
-                  itemBuilder: (context, index) {
-                    final item = cartItems[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              item['image'],
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item['name'],
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Price: Rs. ${item['price']}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
+                child: cartItems.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "Your cart is empty!",
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: cartItems.length,
+                        itemBuilder: (context, index) {
+                          final item = cartItems[index];
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () => decreaseQuantity(index),
-                                icon:
-                                    const Icon(Icons.remove, color: Colors.red),
-                              ),
-                              Text(
-                                item['quantity'].toString(),
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              IconButton(
-                                onPressed: () => increaseQuantity(index),
-                                icon:
-                                    const Icon(Icons.add, color: Colors.green),
-                              ),
-                            ],
-                          ),
-                        ],
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    item['image'],
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['name'],
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Price: Rs. ${item['price']}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => decreaseQuantity(index),
+                                      icon: const Icon(Icons.remove,
+                                          color: Colors.red),
+                                    ),
+                                    Text(
+                                      item['quantity'].toString(),
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => increaseQuantity(index),
+                                      icon: const Icon(Icons.add,
+                                          color: Colors.green),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
               Container(
                 padding: const EdgeInsets.all(16),
