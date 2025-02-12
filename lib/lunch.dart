@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import 'cart_page.dart';
-import 'profile_page.dart';
-import 'favorites_page.dart';
 import 'bottom_nav.dart';
-import 'payment.dart';
 
 class LunchPage extends StatefulWidget {
   const LunchPage({super.key});
@@ -28,34 +24,69 @@ class _LunchPageState extends State<LunchPage> {
       "isFavorite": false,
       "inCart": false,
     },
-    
+    {
+      "name": "Chapati and Chicken Curry",
+      "price": 110,
+      "image": "assets/item8.png",
+      "isFavorite": false,
+      "inCart": false,
+    },
+    {
+      "name": "Porotta and Chicken Curry",
+      "price": 120,
+      "image": "assets/item9.png",
+      "isFavorite": false,
+      "inCart": false,
+    },
   ];
 
-  final List<Map<String, dynamic>> favoriteItems = [];
+  // This will hold the list of favorite items
+  List<Map<String, dynamic>> favoriteItems = [];
 
+  // Toggle favorite status for each item
   void toggleFavorite(int index) {
+    setState(() {
+      final item = menuItems[index];
+      item['isFavorite'] = !item['isFavorite']; // Toggle favorite status
+
+      if (item['isFavorite']) {
+        favoriteItems.add(item); // Add to favorites
+      } else {
+        favoriteItems.removeWhere(
+            (fav) => fav['name'] == item['name']); // Remove from favorites
+      }
+    });
+
     final item = menuItems[index];
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(item['isFavorite']
+            ? "${item['name']} added to favorites!"
+            : "${item['name']} removed from favorites!"),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
-    final existingIndex = favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
-    if (existingIndex != -1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("The item is already in the favorites!"),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      setState(() {
-        item['isFavorite'] = true;
-        favoriteItems.add(item);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("${item['name']} added to favorites!"),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  void _onNavItemTapped(int index) {
+    // Navigate to the respective pages when a button is pressed
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(
+          context,
+          '/favorites',
+          arguments: favoriteItems, // Pass the favorite items list
+        );
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/cart');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
     }
   }
 
@@ -93,10 +124,16 @@ class _LunchPageState extends State<LunchPage> {
                   title: Text(item["name"]),
                   subtitle: Text("INR ${item['price']}"),
                   trailing: IconButton(
-                    icon: Icon(item['isFavorite'] ? Icons.favorite : Icons.favorite_border),
-                    color: item['isFavorite'] ? Colors.red : Colors.grey,
+                    icon: Icon(
+                      item['isFavorite']
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: item['isFavorite']
+                          ? const Color.fromARGB(255, 76, 175, 80)
+                          : Colors.grey,
+                    ),
                     onPressed: () {
-                      toggleFavorite(index);
+                      toggleFavorite(index); // Toggle favorite on button press
                     },
                   ),
                 ),
@@ -104,6 +141,10 @@ class _LunchPageState extends State<LunchPage> {
             },
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: 0,
+        onTap: _onNavItemTapped, // This will now handle the navigation logic
       ),
     );
   }

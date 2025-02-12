@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'bottom_nav.dart';
+import 'favorites_page.dart';
 import 'cart_page.dart';
 import 'profile_page.dart';
-import 'favorites_page.dart';
-import 'bottom_nav.dart';
-import 'payment.dart';
 
 class BreakfastPage extends StatefulWidget {
   const BreakfastPage({super.key});
@@ -28,8 +27,27 @@ class _BreakfastPageState extends State<BreakfastPage> {
       "isFavorite": false,
       "inCart": false,
     },
-    
-    
+    {
+      "name": "Chapati and Kadala Curry",
+      "price": 100,
+      "image": "assets/item1.png",
+      "isFavorite": false,
+      "inCart": false,
+    },
+    {
+      "name": "Appam and Egg Curry",
+      "price": 90,
+      "image": "assets/item2.png",
+      "isFavorite": false,
+      "inCart": false,
+    },
+    {
+      "name": "Dosa and Chutney",
+      "price": 60,
+      "image": "assets/item3.png",
+      "isFavorite": false,
+      "inCart": false,
+    },
   ];
 
   final List<Map<String, dynamic>> favoriteItems = [];
@@ -37,27 +55,29 @@ class _BreakfastPageState extends State<BreakfastPage> {
   void toggleFavorite(int index) {
     final item = menuItems[index];
 
-    final existingIndex = favoriteItems.indexWhere((fav) => fav['name'] == item['name']);
-    if (existingIndex != -1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("The item is already in the favorites!"),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      setState(() {
+    setState(() {
+      if (item['isFavorite']) {
+        // Remove from favorites if already in list
+        item['isFavorite'] = false;
+        favoriteItems.removeWhere((fav) => fav['name'] == item['name']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} removed from favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Add to favorites if not in list
         item['isFavorite'] = true;
         favoriteItems.add(item);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("${item['name']} added to favorites!"),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} added to favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -127,11 +147,13 @@ class _BreakfastPageState extends State<BreakfastPage> {
                       ),
                       IconButton(
                         icon: Icon(
-                          item['isFavorite'] ? Icons.favorite : Icons.favorite_border,
-                          color: item['isFavorite'] ? Colors.red : Colors.grey,
+                          item['isFavorite']
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: item['isFavorite'] ? const Color.fromARGB(255, 76, 175, 80) : Colors.grey,
                         ),
                         onPressed: () {
-                          toggleFavorite(index);
+                          toggleFavorite(index); // Toggle favorite on button press
                         },
                       ),
                     ],
@@ -148,7 +170,11 @@ class _BreakfastPageState extends State<BreakfastPage> {
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites', arguments: favoriteItems);
+            Navigator.pushReplacementNamed(
+              context,
+              '/favorites',
+              arguments: favoriteItems, // Pass favoriteItems to FavoritesPage
+            );
           } else if (index == 2) {
             Navigator.pushReplacementNamed(context, '/cart');
           } else if (index == 3) {

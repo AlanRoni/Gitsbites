@@ -13,15 +13,18 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   void removeItem(int index) {
     setState(() {
-      favoriteItems.removeAt(index);
+      favoriteItems.removeAt(index); // Remove item from favorites
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get favorites passed from HomePage
-    final List<Map<String, dynamic>>? newFavorites =
-        ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>?;
+    // Get the favorites list passed from LunchPage
+    final List<Map<String, dynamic>>? newFavorites = ModalRoute.of(context)
+        ?.settings
+        .arguments as List<Map<String, dynamic>>?;
+
+    // If new favorites are passed, update the local favoriteItems list
     if (newFavorites != null) {
       favoriteItems = newFavorites;
     }
@@ -43,7 +46,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               ),
             ),
           ),
-          // Favorites List
+          // If no favorite items, display a message
           favoriteItems.isEmpty
               ? const Center(
                   child: Text(
@@ -75,9 +78,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         title: Text(item["name"]),
                         subtitle: Text("INR ${item['price']}"),
                         trailing: IconButton(
-                          icon: const Icon(Icons.favorite, color: Colors.red),
+                          icon: const Icon(Icons.favorite,
+                              color: Color.fromARGB(255, 76, 175, 80)),
                           onPressed: () {
-                            // Show confirmation dialog
+                            // Show confirmation dialog to remove item
                             showDialog(
                               context: context,
                               builder: (context) {
@@ -88,14 +92,17 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(context).pop(); // Close dialog
+                                        Navigator.of(context)
+                                            .pop(); // Close dialog
                                       },
                                       child: const Text("No"),
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        removeItem(index);
-                                        Navigator.of(context).pop(); // Close dialog
+                                        removeItem(
+                                            index); // Remove from favorites
+                                        Navigator.of(context)
+                                            .pop(); // Close dialog
                                       },
                                       child: const Text("Yes"),
                                     ),
@@ -114,10 +121,12 @@ class _FavoritesPageState extends State<FavoritesPage> {
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 1,
         onTap: (index) {
+          // Handle bottom navigation
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites');
+            Navigator.pushReplacementNamed(context, '/favorites',
+                arguments: favoriteItems);
           } else if (index == 2) {
             Navigator.pushReplacementNamed(context, '/cart');
           } else if (index == 3) {
