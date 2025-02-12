@@ -1,8 +1,63 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'bottom_nav.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  bool _isEditing = false;
+
+  // Fetch the user data from Firebase Auth and Firestore
+  Future<void> _fetchUserData() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      // Fill the text controllers with the user's data
+      _nameController.text = user.displayName ?? '';
+      _emailController.text = user.email ?? '';
+    }
+  }
+
+  // Save the edited profile information to Firestore and update Auth details
+  Future<void> _saveProfile() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      try {
+        // Update Firebase Authentication display name
+        await user.updateDisplayName(_nameController.text);
+
+        // Save the updated details in Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'name': _nameController.text,
+          'email': _emailController.text,
+        }, SetOptions(merge: true));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData(); // Fetch user data on page load
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,13 +111,24 @@ class ProfilePage extends StatelessWidget {
                         backgroundColor: Colors.grey[200],
                       ),
                       const SizedBox(height: 10),
-                      const Text(
-                        'Alhaarith Hakkim',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      // Editable name
+                      _isEditing
+                          ? TextField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                hintText: 'Enter your name',
+                                border: OutlineInputBorder(),
+                              ),
+                            )
+                          : Text(
+                              _nameController.text.isEmpty
+                                  ? 'Your Name'
+                                  : _nameController.text,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -78,70 +144,53 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Personal Details Cards
-                const Card(
-                  child: ListTile(
-                    leading: Icon(Icons.school),
-                    title: Text('Computer Science'),
-                  ),
-                ),
-                const Card(
-                  child: ListTile(
-                    leading: Icon(Icons.calendar_today),
-                    title: Text('21-25'),
-                  ),
-                ),
-                const Card(
-                  child: ListTile(
-                    leading: Icon(Icons.email),
-                    title: Text('ahh.csa2125@saintgits.org'),
-                  ),
-                ),
+                // Editable Email
+                _isEditing
+                    ? TextField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter your email',
+                          border: OutlineInputBorder(),
+                        ),
+                      )
+                    : ListTile(
+                        leading: const Icon(Icons.email),
+                        title: Text(_emailController.text),
+                      ),
                 const SizedBox(height: 20),
 
-                // Recent Orders Section
-                const Text(
-                  'Recent Orders',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Recent Order Card
-                const Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: AssetImage(
-                        'assets/profile_pic.png', // Replace with actual image path
+                // Edit Button
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        if (_isEditing) {
+                          // Save profile changes
+                          _saveProfile();
+                        }
+                        _isEditing = !_isEditing; // Toggle editing mode
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 40),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    title: Text('Alhaarith Hakkim'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('2 days ago'),
-                        SizedBox(height: 5),
-                        Row(
-                          children: [
-                            Icon(Icons.star, color: Colors.amber, size: 18),
-                            Icon(Icons.star, color: Colors.amber, size: 18),
-                            Icon(Icons.star, color: Colors.amber, size: 18),
-                            Icon(Icons.star, color: Colors.amber, size: 18),
-                            Icon(Icons.star_half,
-                                color: Colors.amber, size: 18),
-                            SizedBox(width: 10),
-                            Text('4.5'),
-                          ],
-                        ),
-                        SizedBox(height: 5),
-                        Text('Rice and Curry'),
-                      ],
+                    child: Text(
+                      _isEditing ? 'Save Changes' : 'Edit Profile',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+
+                const SizedBox(height: 30),
 
                 // Logout Button
                 Center(

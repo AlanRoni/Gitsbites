@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:gitsbites/breakfast.dart';
 import 'package:gitsbites/lunch.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'cart_page.dart';
 import 'profile_page.dart';
 import 'favorites_page.dart';
 import 'bottom_nav.dart';
 import 'payment.dart';
 import 'preorder1.dart';
+import 'login.dart'; // Add this import for the login page
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: 'AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0',
+      authDomain: 'gitsbites.firebaseapp.com',
+      projectId: 'gitsbites',
+      storageBucket: 'gitsbites.firebasestorage.app',
+      messagingSenderId: '524013313932',
+      appId: '1:524013313932:web:7c4d7b341ce9bea77880a9',
+      measurementId: 'G-C5LB4FV54D',
+    ),
+  );
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,8 +39,10 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.green,
         ),
-        initialRoute: '/home',
+        initialRoute: '/login', // Set initial route to '/login'
         routes: {
+          '/login': (context) =>
+              const LoginPage(), // Define route for login page
           '/home': (context) => const HomePage(),
           '/favorites': (context) => const FavoritesPage(),
           '/cart': (context) => const CartPage(),
