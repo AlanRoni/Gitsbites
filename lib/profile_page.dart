@@ -8,14 +8,14 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
-            const Text(
+            Text(
               'Profile',
               style: TextStyle(color: Colors.white),
             ),
-            const SizedBox(width: 8),
-            const Icon(
+            SizedBox(width: 8),
+            Icon(
               Icons.person_outline,
               size: 24,
               color: Colors.white,
