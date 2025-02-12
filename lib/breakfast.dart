@@ -51,7 +51,9 @@ class _BreakfastPageState extends State<BreakfastPage> {
   ];
 
   final List<Map<String, dynamic>> favoriteItems = [];
+  final List<Map<String, dynamic>> cartItems = [];
 
+  // Toggle favorite status for each item
   void toggleFavorite(int index) {
     final item = menuItems[index];
 
@@ -73,6 +75,35 @@ class _BreakfastPageState extends State<BreakfastPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("${item['name']} added to favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
+
+  // Toggle cart status for each item
+  void toggleCart(int index) {
+    final item = menuItems[index];
+
+    setState(() {
+      if (item['inCart']) {
+        // Remove from cart if already in list
+        item['inCart'] = false;
+        cartItems.removeWhere((cartItem) => cartItem['name'] == item['name']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} removed from cart!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Add to cart if not in list
+        item['inCart'] = true;
+        cartItems.add(item);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} added to cart!"),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -145,16 +176,36 @@ class _BreakfastPageState extends State<BreakfastPage> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(
-                          item['isFavorite']
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: item['isFavorite'] ? const Color.fromARGB(255, 76, 175, 80) : Colors.grey,
-                        ),
-                        onPressed: () {
-                          toggleFavorite(index); // Toggle favorite on button press
-                        },
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Favorite Button
+                          IconButton(
+                            icon: Icon(
+                              item['isFavorite']
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: item['isFavorite']
+                                  ? const Color.fromARGB(255, 76, 175, 80)
+                                  : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleFavorite(index); // Toggle favorite on button press
+                            },
+                          ),
+                          // Cart Button
+                          IconButton(
+                            icon: Icon(
+                              item['inCart']
+                                  ? Icons.shopping_cart
+                                  : Icons.add_shopping_cart,
+                              color: item['inCart'] ? Colors.green : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleCart(index); // Toggle cart on button press
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -176,7 +227,11 @@ class _BreakfastPageState extends State<BreakfastPage> {
               arguments: favoriteItems, // Pass favoriteItems to FavoritesPage
             );
           } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
+            Navigator.pushReplacementNamed(
+              context,
+              '/cart',
+              arguments: cartItems, // Pass cartItems to CartPage
+            );
           } else if (index == 3) {
             Navigator.pushReplacementNamed(context, '/profile');
           }
