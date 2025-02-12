@@ -1,15 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:gitsbites/breakfast.dart';
 import 'package:gitsbites/lunch.dart';
+import 'package:gitsbites/cart_page.dart';
+import 'package:gitsbites/profile_page.dart';
+import 'package:gitsbites/favorites_page.dart';
+import 'package:gitsbites/bottom_nav.dart';
+import 'package:gitsbites/payment.dart';
+import 'package:gitsbites/preorder1.dart';
+import 'package:table_calendar/table_calendar.dart'; // Import table_calendar package
+import 'package:firebase_core/firebase_core.dart';
 import 'cart_page.dart';
 import 'profile_page.dart';
 import 'favorites_page.dart';
 import 'bottom_nav.dart';
 import 'payment.dart';
 import 'preorder1.dart';
+import 'login.dart'; // Add this import for the login page
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: 'AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0',
+      authDomain: 'gitsbites.firebaseapp.com',
+      projectId: 'gitsbites',
+      storageBucket: 'gitsbites.firebasestorage.app',
+      messagingSenderId: '524013313932',
+      appId: '1:524013313932:web:7c4d7b341ce9bea77880a9',
+      measurementId: 'G-C5LB4FV54D',
+    ),
+  );
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,8 +46,10 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.green,
         ),
-        initialRoute: '/home',
+        initialRoute: '/login', // Set initial route to '/login'
         routes: {
+          '/login': (context) =>
+              const LoginPage(), // Define route for login page
           '/home': (context) => const HomePage(),
           '/favorites': (context) => const FavoritesPage(),
           '/cart': (context) => const CartPage(),
@@ -41,13 +66,81 @@ class MyApp extends StatelessWidget {
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  // Function to show the Date Picker with custom calendar
+  Future<void> _selectPreOrderDate(BuildContext context) async {
+    DateTime currentDate = DateTime.now();
+
+    // Show the custom calendar with gradient background
+    final DateTime? selectedDate = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            height: 400,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE3F4E7), Color(0xFFA8D5A3)], // Soft gradient
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: TableCalendar(
+              focusedDay: currentDate,
+              firstDay: DateTime(currentDate.year, 1, 1),
+              lastDay: DateTime(currentDate.year + 1, 12, 31),
+              availableCalendarFormats: const {
+                CalendarFormat.month: 'Month',
+              },
+              enabledDayPredicate: (day) {
+                // Disable dates before today
+                return day
+                    .isAfter(currentDate.subtract(const Duration(days: 1)));
+              },
+              onDaySelected: (selectedDay, focusedDay) {
+                Navigator.of(context).pop(selectedDay);
+              },
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                rightChevronIcon:
+                    Icon(Icons.chevron_right, color: Colors.white),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(color: Colors.green.shade700),
+                weekendStyle: TextStyle(color: Colors.green.shade900),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    // If the user selects a date, navigate to PreOrder page with the selected date
+    if (selectedDate != null) {
+      Navigator.pushNamed(
+        context,
+        '/preorder',
+        arguments:
+            selectedDate, // Pass selected date as an argument to PreOrderPage
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
-            // Home logo
             Icon(
               Icons.home, // Using the home icon for the logo
               size: 24, // Adjust the size of the logo
@@ -139,8 +232,8 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(
-                          context, '/preorder'); // Navigate to PreOrderPage
+                      _selectPreOrderDate(
+                          context); // Show date picker before redirecting
                     },
                     child: const Text(
                       'PRE-ORDER',

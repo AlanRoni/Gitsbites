@@ -21,7 +21,8 @@ dependencies:
   universal_html: ^2.2.4  # ✅ Add this for Web support
   printing: ^5.14.0
   firebase_storage: ^12.4.1
-  
+  intl: ^0.18.0
+  table_calendar: ^3.0.0
   
 
 dev_dependencies:
@@ -35,17 +36,20 @@ flutter:
 
   assets:
     - assets/profile_pic.png
-    - assets/item1.png
-    - assets/item2.png
-    - assets/item3.png
+    - assets/puttu.png
+    - assets/appam.png
+    - assets/chapati.png
     - assets/logog.png
     - assets/visa.jpg
-    - assets/item4.png
-    - assets/item6.png
-    - assets/item5.png
-    - assets/item7.png
-    - assets/item8.png
-    - assets/item9.png
+    - assets/chickencurry.png
+    - assets/eggcurry.png
+    - assets/idli.png
+    - assets/kadalacurry.png
+    - assets/porotta.png
+    - assets/meals.png
+    - assets/biriyani.png
+    - assets/fishfry.png
+
 
 
 

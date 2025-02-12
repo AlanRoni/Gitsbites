@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,12 +29,20 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
+      // Sign in with Firebase Authentication
       await _auth.signInWithEmailAndPassword(
         email: email,
         password: _passwordController.text.trim(),
       );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Login Successful!')),
+      );
+
+      // Navigate to the Home Page after successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
       );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,6 +80,10 @@ class _LoginPageState extends State<LoginPage> {
               Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!'),
         ),
       );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Firebase Error: ${e.message}')),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -81,15 +94,15 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.lightGreen.shade100],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Colors.lightGreen.shade100],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -99,11 +112,12 @@ class _LoginPageState extends State<LoginPage> {
                 child: Center(
                   child: Image.asset(
                     'assets/Logog.png',
-                    height: 400, // Larger logo
-                    width: 400,
+                    height: 200, // Adjusted logo size
+                    width: 200,
                   ),
                 ),
               ),
+
               // Welcome Text
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -123,14 +137,15 @@ class _LoginPageState extends State<LoginPage> {
                       'Log in to your account',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[700],
+                        color: Colors.grey.shade700, // Use .shade700 instead
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 40),
-              // Input Fields
+
+              // Input Fields Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
@@ -142,9 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                         prefixIcon: const Icon(Icons.email, color: Colors.grey),
                         labelText: 'Email',
                         labelStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
+                            fontSize: 14, fontWeight: FontWeight.w400),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -156,6 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
+
                     // Password Field
                     TextField(
                       controller: _passwordController,
@@ -177,9 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         labelText: 'Password',
                         labelStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
+                            fontSize: 14, fontWeight: FontWeight.w400),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -191,28 +203,27 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
+
                     // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {}, // Add your forgot password logic here
                         child: const Text(
                           'Forgot password?',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.blue, fontSize: 14),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 20),
+
               // Login Button
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 80), // Shortened button width
+                padding: const EdgeInsets.symmetric(horizontal: 80),
                 child: ElevatedButton(
                   onPressed: _login,
                   style: ElevatedButton.styleFrom(
@@ -227,25 +238,23 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text(
                     'Login',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
-              // Signup Section
+
+              const SizedBox(height: 20),
+
+              // Google Sign-in Section
               Center(
                 child: GestureDetector(
                   onTap: _signInWithGoogle, // Trigger Google Sign-In
                   child: RichText(
-                    text: const TextSpan(
+                    text: TextSpan(
                       text: "Don’t have an account? ",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
                       children: [
                         TextSpan(
                           text: 'Sign up',

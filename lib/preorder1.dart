@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Import intl package for date formatting
 
 class PreOrderPage extends StatelessWidget {
   const PreOrderPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Retrieve the selected date passed as an argument
+    final DateTime selectedDate =
+        ModalRoute.of(context)!.settings.arguments as DateTime;
+
+    // Format the date to only show the date (day, month, year)
+    final formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pre-Order', style: TextStyle(color: Colors.white)),
@@ -26,6 +34,15 @@ class PreOrderPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Display the formatted date only (without time)
+                Text(
+                  'Selected Pre-Order Date: $formattedDate',
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green),
+                ),
+                const SizedBox(height: 20), // Space between text and buttons
                 // Breakfast Button
                 SizedBox(
                   width: 200, // Ensures both buttons have the same size
@@ -38,7 +55,8 @@ class PreOrderPage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(context, '/breakfast'); // Navigate to Breakfast Page
+                      Navigator.pushNamed(
+                          context, '/breakfast'); // Navigate to Breakfast Page
                     },
                     child: const Text(
                       'BREAKFAST',
@@ -63,7 +81,8 @@ class PreOrderPage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(context, '/lunch'); // Navigate to Lunch Page
+                      Navigator.pushNamed(
+                          context, '/lunch'); // Navigate to Lunch Page
                     },
                     child: const Text(
                       'LUNCH',

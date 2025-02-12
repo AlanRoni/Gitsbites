@@ -14,44 +14,75 @@ class BreakfastPage extends StatefulWidget {
 class _BreakfastPageState extends State<BreakfastPage> {
   final List<Map<String, dynamic>> menuItems = [
     {
-      "name": "Puttu",
-      "price": 50,
-      "image": "assets/item4.png",
-      "isFavorite": false,
-      "inCart": false,
-    },
-    {
-      "name": "Idli",
+      "name": "Puttu ",
       "price": 40,
-      "image": "assets/item5.png",
+      "image": "assets/puttu.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
     },
     {
-      "name": "Chapati and Kadala Curry",
-      "price": 100,
-      "image": "assets/item1.png",
+      "name": "Idli and Sambar(Nos:4)",
+      "price": 55,
+      "image": "assets/idli.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
     },
     {
-      "name": "Appam and Egg Curry",
-      "price": 90,
-      "image": "assets/item2.png",
+      "name": "Chapati",
+      "price": 10,
+      "image": "assets/chapati.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
     },
     {
-      "name": "Dosa and Chutney",
+      "name": "Appam",
+      "price": 12,
+      "image": "assets/appam.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Porotta",
+      "price": 12,
+      "image": "assets/porotta.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Chicken Curry",
       "price": 60,
-      "image": "assets/item3.png",
+      "image": "assets/chickencurry.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Kadala Curry",
+      "price": 20,
+      "image": "assets/kadalacurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Egg Curry",
+      "price": 40,
+      "image": "eggcurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
     },
   ];
 
   final List<Map<String, dynamic>> favoriteItems = [];
+  final List<Map<String, dynamic>> cartItems = [];
 
+  // Toggle favorite status for each item
   void toggleFavorite(int index) {
     final item = menuItems[index];
 
@@ -80,11 +111,38 @@ class _BreakfastPageState extends State<BreakfastPage> {
     });
   }
 
+  // Toggle cart status for each item
+  void toggleCart(int index) {
+    final item = menuItems[index];
+
+    setState(() {
+      if (item['inCart']) {
+        // Remove from cart if already in list
+        item['inCart'] = false;
+        cartItems.removeWhere((cartItem) => cartItem['name'] == item['name']);
+      } else {
+        // Add to cart if not in list
+        item['inCart'] = true;
+        cartItems.add(item);
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(item['inCart']
+            ? "${item['name']} added to cart!"
+            : "${item['name']} removed from cart!"),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Breakfast Menu', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Breakfast Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
       body: Stack(
@@ -145,16 +203,38 @@ class _BreakfastPageState extends State<BreakfastPage> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(
-                          item['isFavorite']
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: item['isFavorite'] ? const Color.fromARGB(255, 76, 175, 80) : Colors.grey,
-                        ),
-                        onPressed: () {
-                          toggleFavorite(index); // Toggle favorite on button press
-                        },
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Favorite Button
+                          IconButton(
+                            icon: Icon(
+                              item['isFavorite']
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: item['isFavorite']
+                                  ? const Color.fromARGB(255, 76, 175, 80)
+                                  : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleFavorite(
+                                  index); // Toggle favorite on button press
+                            },
+                          ),
+                          // Cart Button
+                          IconButton(
+                            icon: Icon(
+                              item['inCart']
+                                  ? Icons.shopping_cart
+                                  : Icons.add_shopping_cart,
+                              color:
+                                  item['inCart'] ? Colors.green : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleCart(index); // Toggle cart on button press
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -176,7 +256,11 @@ class _BreakfastPageState extends State<BreakfastPage> {
               arguments: favoriteItems, // Pass favoriteItems to FavoritesPage
             );
           } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
+            Navigator.pushReplacementNamed(
+              context,
+              '/cart',
+              arguments: cartItems, // Pass cartItems to CartPage
+            );
           } else if (index == 3) {
             Navigator.pushReplacementNamed(context, '/profile');
           }

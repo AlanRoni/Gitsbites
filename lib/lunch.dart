@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'bottom_nav.dart';
+import 'favorites_page.dart';
+import 'cart_page.dart';
+import 'profile_page.dart';
 
 class LunchPage extends StatefulWidget {
   const LunchPage({super.key});
@@ -11,83 +14,119 @@ class LunchPage extends StatefulWidget {
 class _LunchPageState extends State<LunchPage> {
   final List<Map<String, dynamic>> menuItems = [
     {
-      "name": "Meals",
-      "price": 100,
-      "image": "assets/item7.png",
-      "isFavorite": false,
-      "inCart": false,
-    },
-    {
       "name": "Biriyani",
       "price": 110,
-      "image": "assets/item6.png",
+      "image": "assets/biriyani.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
     },
     {
-      "name": "Chapati and Chicken Curry",
-      "price": 110,
-      "image": "assets/item8.png",
+      "name": "Meals",
+      "price": 100,
+      "image": "assets/meals.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
     },
     {
-      "name": "Porotta and Chicken Curry",
-      "price": 120,
-      "image": "assets/item9.png",
+      "name": "Fish Fry",
+      "price": 30,
+      "image": "assets/fishfry.png",
       "isFavorite": false,
       "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Chicken Curry",
+      "price": 60,
+      "image": "assets/chickencurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": " Porotta",
+      "price": 12,
+      "image": "assets/porotta.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": " Chapati",
+      "price": 10,
+      "image": "assets/chapati.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Egg Curry",
+      "price": 40,
+      "image": "assets/eggcurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
     },
   ];
 
-  // This will hold the list of favorite items
-  List<Map<String, dynamic>> favoriteItems = [];
+  final List<Map<String, dynamic>> favoriteItems = [];
+  final List<Map<String, dynamic>> cartItems = [];
 
   // Toggle favorite status for each item
   void toggleFavorite(int index) {
-    setState(() {
-      final item = menuItems[index];
-      item['isFavorite'] = !item['isFavorite']; // Toggle favorite status
+    final item = menuItems[index];
 
+    setState(() {
       if (item['isFavorite']) {
-        favoriteItems.add(item); // Add to favorites
+        // Remove from favorites if already in list
+        item['isFavorite'] = false;
+        favoriteItems.removeWhere((fav) => fav['name'] == item['name']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} removed from favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       } else {
-        favoriteItems.removeWhere(
-            (fav) => fav['name'] == item['name']); // Remove from favorites
+        // Add to favorites if not in list
+        item['isFavorite'] = true;
+        favoriteItems.add(item);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} added to favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
+
+  // Toggle cart status for each item
+  void toggleCart(int index) {
+    final item = menuItems[index];
+
+    setState(() {
+      if (item['inCart']) {
+        // Remove from cart if already in list
+        item['inCart'] = false;
+        cartItems.removeWhere((cartItem) => cartItem['name'] == item['name']);
+      } else {
+        // Add to cart if not in list
+        item['inCart'] = true;
+        cartItems.add(item);
       }
     });
 
-    final item = menuItems[index];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(item['isFavorite']
-            ? "${item['name']} added to favorites!"
-            : "${item['name']} removed from favorites!"),
+        content: Text(item['inCart']
+            ? "${item['name']} added to cart!"
+            : "${item['name']} removed from cart!"),
         duration: const Duration(seconds: 2),
       ),
     );
-  }
-
-  void _onNavItemTapped(int index) {
-    // Navigate to the respective pages when a button is pressed
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(
-          context,
-          '/favorites',
-          arguments: favoriteItems, // Pass the favorite items list
-        );
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/cart');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/profile');
-        break;
-    }
   }
 
   @override
@@ -119,22 +158,76 @@ class _LunchPageState extends State<LunchPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 5,
-                child: ListTile(
-                  leading: Image.asset(item["image"], width: 60, height: 60),
-                  title: Text(item["name"]),
-                  subtitle: Text("INR ${item['price']}"),
-                  trailing: IconButton(
-                    icon: Icon(
-                      item['isFavorite']
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      color: item['isFavorite']
-                          ? const Color.fromARGB(255, 76, 175, 80)
-                          : Colors.grey,
-                    ),
-                    onPressed: () {
-                      toggleFavorite(index); // Toggle favorite on button press
-                    },
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          item["image"],
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item["name"],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "INR ${item['price']}",
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Favorite Button
+                          IconButton(
+                            icon: Icon(
+                              item['isFavorite']
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: item['isFavorite']
+                                  ? const Color.fromARGB(255, 76, 175, 80)
+                                  : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleFavorite(
+                                  index); // Toggle favorite on button press
+                            },
+                          ),
+                          // Cart Button
+                          IconButton(
+                            icon: Icon(
+                              item['inCart']
+                                  ? Icons.shopping_cart
+                                  : Icons.add_shopping_cart,
+                              color:
+                                  item['inCart'] ? Colors.green : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleCart(index); // Toggle cart on button press
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -143,8 +236,26 @@ class _LunchPageState extends State<LunchPage> {
         ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0,
-        onTap: _onNavItemTapped, // This will now handle the navigation logic
+        currentIndex: 1,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(
+              context,
+              '/favorites',
+              arguments: favoriteItems, // Pass favoriteItems to FavoritesPage
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(
+              context,
+              '/cart',
+              arguments: cartItems, // Pass cartItems to CartPage
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacementNamed(context, '/profile');
+          }
+        },
       ),
     );
   }
