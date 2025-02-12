@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:gitsbites/breakfast.dart';
 import 'package:gitsbites/lunch.dart';
-import 'cart_page.dart';
-import 'profile_page.dart';
-import 'favorites_page.dart';
-import 'bottom_nav.dart';
-import 'payment.dart';
-import 'preorder1.dart';
+import 'package:gitsbites/cart_page.dart';
+import 'package:gitsbites/profile_page.dart';
+import 'package:gitsbites/favorites_page.dart';
+import 'package:gitsbites/bottom_nav.dart';
+import 'package:gitsbites/payment.dart';
+import 'package:gitsbites/preorder1.dart';
+import 'package:table_calendar/table_calendar.dart';  // Import table_calendar package
 
 void main() {
   runApp(const MyApp());
@@ -18,28 +19,95 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Kioski App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green,
-        ),
-        initialRoute: '/home',
-        routes: {
-          '/home': (context) => const HomePage(),
-          '/favorites': (context) => const FavoritesPage(),
-          '/cart': (context) => const CartPage(),
-          '/profile': (context) => const ProfilePage(),
-          '/payment': (context) =>
-              const PaymentPage(totalAmount: 0, cartItems: []),
-          '/preorder': (context) => const PreOrderPage(),
-          '/breakfast': (context) => const BreakfastPage(),
-          '/lunch': (context) => const LunchPage(),
-        });
+      title: 'Kioski App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+      ),
+      initialRoute: '/home',
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/favorites': (context) => const FavoritesPage(),
+        '/cart': (context) => const CartPage(),
+        '/profile': (context) => const ProfilePage(),
+        '/payment': (context) =>
+            const PaymentPage(totalAmount: 0, cartItems: []),
+        '/preorder': (context) => const PreOrderPage(),
+        '/breakfast': (context) => const BreakfastPage(),
+        '/lunch': (context) => const LunchPage(),
+      },
+    );
   }
 }
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  // Function to show the Date Picker with custom calendar
+  Future<void> _selectPreOrderDate(BuildContext context) async {
+    DateTime currentDate = DateTime.now();
+
+    // Show the custom calendar with gradient background
+    final DateTime? selectedDate = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            height: 400,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE3F4E7), Color(0xFFA8D5A3)],  // Soft gradient
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: TableCalendar(
+              focusedDay: currentDate,
+              firstDay: DateTime(currentDate.year, 1, 1),
+              lastDay: DateTime(currentDate.year + 1, 12, 31),
+              availableCalendarFormats: const {
+                CalendarFormat.month: 'Month',
+              },
+              enabledDayPredicate: (day) {
+                // Disable dates before today
+                return day.isAfter(currentDate.subtract(const Duration(days: 1)));
+              },
+              onDaySelected: (selectedDay, focusedDay) {
+                Navigator.of(context).pop(selectedDay);
+              },
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(color: Colors.green.shade700),
+                weekendStyle: TextStyle(color: Colors.green.shade900),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    // If the user selects a date, navigate to PreOrder page with the selected date
+    if (selectedDate != null) {
+      Navigator.pushNamed(
+        context,
+        '/preorder',
+        arguments: selectedDate, // Pass selected date as an argument to PreOrderPage
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +115,6 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            // Home logo
             Icon(
               Icons.home, // Using the home icon for the logo
               size: 24, // Adjust the size of the logo
@@ -87,8 +154,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(
-                          context, '/breakfast'); // Navigate to Breakfast Page
+                      Navigator.pushNamed(context, '/breakfast'); // Navigate to Breakfast Page
                     },
                     child: const Text(
                       'BREAKFAST',
@@ -113,8 +179,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(
-                          context, '/lunch'); // Navigate to Lunch Page
+                      Navigator.pushNamed(context, '/lunch'); // Navigate to Lunch Page
                     },
                     child: const Text(
                       'LUNCH',
@@ -139,8 +204,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(
-                          context, '/preorder'); // Navigate to PreOrderPage
+                      _selectPreOrderDate(context); // Show date picker before redirecting
                     },
                     child: const Text(
                       'PRE-ORDER',
