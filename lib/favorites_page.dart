@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'bottom_nav.dart';
+import 'cart_page.dart'; // Import CartPage
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -10,6 +11,7 @@ class FavoritesPage extends StatefulWidget {
 
 class _FavoritesPageState extends State<FavoritesPage> {
   List<Map<String, dynamic>> favoriteItems = [];
+  List<Map<String, dynamic>> _cartItems = []; // Cart items list
 
   void removeItem(int index) {
     setState(() {
@@ -17,14 +19,32 @@ class _FavoritesPageState extends State<FavoritesPage> {
     });
   }
 
+  void addToCart(Map<String, dynamic> item) {
+    setState(() {
+      // Check if item is already in cart, update quantity if needed
+      int existingIndex =
+          _cartItems.indexWhere((cartItem) => cartItem['name'] == item['name']);
+      if (existingIndex != -1) {
+        _cartItems[existingIndex]['quantity'] += 1; // Increase quantity
+      } else {
+        _cartItems.add({...item, 'quantity': 1}); // Add new item with quantity
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("${item['name']} added to cart"),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get the favorites list passed from LunchPage
     final List<Map<String, dynamic>>? newFavorites = ModalRoute.of(context)
         ?.settings
         .arguments as List<Map<String, dynamic>>?;
 
-    // If new favorites are passed, update the local favoriteItems list
     if (newFavorites != null) {
       favoriteItems = newFavorites;
     }
@@ -33,10 +53,24 @@ class _FavoritesPageState extends State<FavoritesPage> {
       appBar: AppBar(
         title: const Text('Favorites', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CartPage(),
+                  settings:
+                      RouteSettings(arguments: _cartItems), // Pass cart items
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
-          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -46,7 +80,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
               ),
             ),
           ),
-          // If no favorite items, display a message
           favoriteItems.isEmpty
               ? const Center(
                   child: Text(
@@ -77,40 +110,47 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         ),
                         title: Text(item["name"]),
                         subtitle: Text("INR ${item['price']}"),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.favorite,
-                              color: Color.fromARGB(255, 76, 175, 80)),
-                          onPressed: () {
-                            // Show confirmation dialog to remove item
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text("Remove Item"),
-                                  content: Text(
-                                      "Are you sure you want to remove '${item['name']}' from favorites?"),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .pop(); // Close dialog
-                                      },
-                                      child: const Text("No"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        removeItem(
-                                            index); // Remove from favorites
-                                        Navigator.of(context)
-                                            .pop(); // Close dialog
-                                      },
-                                      child: const Text("Yes"),
-                                    ),
-                                  ],
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.favorite,
+                                  color: Colors.green),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("Remove Item"),
+                                      content: Text(
+                                          "Remove '${item['name']}' from favorites?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                          child: const Text("No"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            removeItem(index);
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text("Yes"),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 );
                               },
-                            );
-                          },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.shopping_cart,
+                                  color: Colors.blue),
+                              onPressed: () {
+                                addToCart(item); // Add item to cart
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -121,17 +161,14 @@ class _FavoritesPageState extends State<FavoritesPage> {
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 1,
         onTap: (index) {
-          // Handle bottom navigation
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else if (index == 1) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1)
             Navigator.pushReplacementNamed(context, '/favorites',
                 arguments: favoriteItems);
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
-          } else if (index == 3) {
-            Navigator.pushReplacementNamed(context, '/profile');
-          }
+          if (index == 2)
+            Navigator.pushReplacementNamed(context, '/cart',
+                arguments: _cartItems);
+          if (index == 3) Navigator.pushReplacementNamed(context, '/profile');
         },
       ),
     );
