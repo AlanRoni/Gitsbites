@@ -4,15 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:universal_html/html.dart' as html;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PaymentPage extends StatefulWidget {
   final int totalAmount;
   final List<Map<String, dynamic>> cartItems;
+  final String userName;
+  final String userEmail;
 
   const PaymentPage({
     super.key,
     required this.totalAmount,
     required this.cartItems,
+    required this.userName,
+    required this.userEmail,
   });
 
   @override
@@ -23,6 +28,7 @@ class _PaymentPageState extends State<PaymentPage> {
   String? selectedPaymentMethod;
   bool isHoveredGooglePay = false;
   bool isHoveredCOD = false;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +180,12 @@ class _PaymentPageState extends State<PaymentPage> {
               GestureDetector(
                 onTap: () async {
                   if (selectedPaymentMethod != null) {
+                    // Generate the receipt
                     await _generateReceipt(
+                        widget.totalAmount, widget.cartItems);
+
+                    // Save order details to Firestore
+                    await _saveOrderToFirestore(
                         widget.totalAmount, widget.cartItems);
 
                     // Show Thank You Message
@@ -251,6 +262,25 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
+  Future<void> _saveOrderToFirestore(
+      int totalAmount, List<Map<String, dynamic>> cartItems) async {
+    try {
+      // Create a new document in the 'user' collection
+      await _firestore.collection('user').add({
+        // Store the user ID to link the order to a user
+        'userName': widget.userName, // Use widget.userName here
+        'userEmail': widget.userEmail, // Use widget.userEmail here
+        'totalAmount': totalAmount,
+        'paymentMethod': selectedPaymentMethod,
+        'transactionId': '#554732223687',
+        'date': _getCurrentDate(),
+        'items': cartItems,
+      });
+    } catch (e) {
+      print('Error saving order to Firestore: $e');
+    }
+  }
+
   // **Reusable Payment Method Card**
   Widget _buildPaymentMethod({
     required IconData icon,
@@ -308,7 +338,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16.0,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,

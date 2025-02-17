@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'payment.dart';
 import 'bottom_nav.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -10,20 +12,47 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // This will hold the list of cart items passed as arguments
   List<Map<String, dynamic>> cartItems = [];
+  String userName = '';
+  String userEmail = '';
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Retrieve the cart items passed as arguments
-    final List<Map<String, dynamic>>? newCartItems =
-        ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>?;
+    final List<Map<String, dynamic>>? newCartItems = ModalRoute.of(context)
+        ?.settings
+        .arguments as List<Map<String, dynamic>>?;
 
     if (newCartItems != null) {
       setState(() {
         cartItems = newCartItems;
       });
+    }
+
+    _getUserDetails();
+  }
+
+  // Function to get user details from Firestore based on UID
+  Future<void> _getUserDetails() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            final data = userDoc.data() as Map<String, dynamic>;
+            userName = data['name'] ?? 'Unknown';
+            userEmail = data['email'] ?? 'Unknown';
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching user details: $e");
     }
   }
 
@@ -207,6 +236,8 @@ class _CartPageState extends State<CartPage> {
                             builder: (context) => PaymentPage(
                               totalAmount: calculateTotalPrice(),
                               cartItems: List.from(cartItems), // Pass items
+                              userName: userName,
+                              userEmail: userEmail,
                             ),
                           ),
                         );
