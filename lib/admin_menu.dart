@@ -15,14 +15,14 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: const Text(
-    'Canteen Menu',
-    style: TextStyle(color: Colors.white), // White text
-  ),
+        title: const Text(
+          'Canteen Menu',
+          style: TextStyle(color: Colors.white), // White text
+        ),
   backgroundColor: Colors.lightGreen.shade700, // Same green color as before
-  elevation: 4.0, // Slight shadow for depth
+        elevation: 4.0, // Slight shadow for depth
   iconTheme: const IconThemeData(color: Colors.white), // White back button icon
-),
+      ),
 
 
       body: Container(
@@ -99,7 +99,8 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
                               onPressed: () =>
                                   _editItem(context, document.id, stock, price),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green.shade400.withOpacity(0.85),
+                                backgroundColor:
+                                    Colors.green.shade400.withOpacity(0.85),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.0),
@@ -129,7 +130,8 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
                     ),
                     child: const Text(
                       'Save Changes',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -227,7 +229,8 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
           builder: (context) {
             return AlertDialog(
               title: const Text('Confirm Save'),
-              content: const Text('Are you sure you want to save these changes?'),
+              content:
+                  const Text('Are you sure you want to save these changes?'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),

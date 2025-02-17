@@ -20,6 +20,9 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
+  bool _googlePaySelected = false;
+  bool _cashOnDeliverySelected = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,27 +120,34 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
               const SizedBox(height: 15.0),
 
-              // **Payment Methods**
+              // **Payment Methods with Checkboxes**
               Column(
                 children: [
-                  _buildPaymentMethod(
+                  _buildPaymentMethodCheckbox(
                     icon: Icons.account_balance_wallet,
                     title: "Google Pay",
                     subtitle: "Pay securely via Google Pay",
                     color: Colors.blue.shade600,
-                    onTap: () {
-                      print('Pay via Google Pay');
+                    value: _googlePaySelected,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _googlePaySelected = value!;
+                        if (value) _cashOnDeliverySelected = false;
+                      });
                     },
                   ),
                   const SizedBox(height: 12.0),
-                  _buildPaymentMethod(
+                  _buildPaymentMethodCheckbox(
                     icon: Icons.money,
                     title: "Cash on Delivery",
                     subtitle: "Pay with cash upon delivery",
                     color: Colors.green.shade700,
-                    onTap: () async {
-                      await _generateReceipt(
-                          widget.totalAmount, widget.cartItems);
+                    value: _cashOnDeliverySelected,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _cashOnDeliverySelected = value!;
+                        if (value) _googlePaySelected = false;
+                      });
                     },
                   ),
                 ],
@@ -148,7 +158,14 @@ class _PaymentPageState extends State<PaymentPage> {
               // **Confirm Payment Button**
               GestureDetector(
                 onTap: () {
-                  print('Payment Confirmed');
+                  if (_googlePaySelected || _cashOnDeliverySelected) {
+                    print('Payment Confirmed with: ${_googlePaySelected ? 'Google Pay' : 'Cash on Delivery'}');
+                    if (_cashOnDeliverySelected) {
+                      _generateReceipt(widget.totalAmount, widget.cartItems);
+                    }
+                  } else {
+                    print('Please select a payment method');
+                  }
                 },
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -187,16 +204,19 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  // **Reusable Payment Method Card**
-  Widget _buildPaymentMethod({
+  // **Reusable Payment Method Checkbox**
+  Widget _buildPaymentMethodCheckbox({
     required IconData icon,
     required String title,
     required String subtitle,
     required Color color,
-    required VoidCallback onTap,
+    required bool value,
+    required Function(bool?) onChanged,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        onChanged(!value);
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
         decoration: BoxDecoration(
@@ -212,10 +232,10 @@ class _PaymentPageState extends State<PaymentPage> {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: color.withOpacity(0.2),
-              radius: 22,
-              child: Icon(icon, color: color, size: 24),
+            Checkbox(
+              value: value,
+              onChanged: onChanged,
+              activeColor: color,
             ),
             const SizedBox(width: 15.0),
             Column(
@@ -236,8 +256,6 @@ class _PaymentPageState extends State<PaymentPage> {
                 ),
               ],
             ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
       ),
@@ -245,7 +263,6 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   // **Generate Receipt PDF**
-  // **Generate Professional Receipt PDF**
   Future<void> _generateReceipt(
       int amount, List<Map<String, dynamic>> cartItems) async {
     final pdf = pw.Document();
