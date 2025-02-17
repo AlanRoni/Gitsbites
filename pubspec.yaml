@@ -24,6 +24,7 @@ dependencies:
   firebase_storage: ^12.4.1
   intl: ^0.18.0
   table_calendar: ^3.0.0
+  fluttertoast: ^8.2.12
   
 
 dev_dependencies:

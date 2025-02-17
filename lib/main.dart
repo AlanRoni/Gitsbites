@@ -7,15 +7,10 @@ import 'package:gitsbites/favorites_page.dart';
 import 'package:gitsbites/bottom_nav.dart';
 import 'package:gitsbites/payment.dart';
 import 'package:gitsbites/preorder1.dart';
-import 'package:table_calendar/table_calendar.dart'; // Import table_calendar package
+import 'package:gitsbites/admin_menu.dart'; // Import admin_menu.dart
+import 'package:table_calendar/table_calendar.dart'; 
 import 'package:firebase_core/firebase_core.dart';
-import 'cart_page.dart';
-import 'profile_page.dart';
-import 'favorites_page.dart';
-import 'bottom_nav.dart';
-import 'payment.dart';
-import 'preorder1.dart';
-import 'login.dart'; // Add this import for the login page
+import 'login.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,24 +36,23 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Kioski App',
+        title: 'Kiosk App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.green,
         ),
-        initialRoute: '/login', // Set initial route to '/login'
+        initialRoute: '/login',
         routes: {
-          '/login': (context) =>
-              const LoginPage(), // Define route for login page
+          '/login': (context) => const LoginPage(),
           '/home': (context) => const HomePage(),
           '/favorites': (context) => const FavoritesPage(),
           '/cart': (context) => const CartPage(),
           '/profile': (context) => const ProfilePage(),
-          '/payment': (context) =>
-              const PaymentPage(totalAmount: 0, cartItems: []),
+          '/payment': (context) => const PaymentPage(totalAmount: 0, cartItems: []),
           '/preorder': (context) => const PreOrderPage(),
           '/breakfast': (context) => const BreakfastPage(),
           '/lunch': (context) => const LunchPage(),
+          '/admin_menu': (context) => const AdminMenuPage(), // Added Admin Menu route
         });
   }
 }
