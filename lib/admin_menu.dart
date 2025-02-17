@@ -10,6 +10,7 @@ class AdminMenuPage extends StatefulWidget {
 
 class _AdminMenuPageState extends State<AdminMenuPage> {
   final List<Map<String, dynamic>> _editedItems = [];
+  String _selectedCategory = 'Menu_Breakfast'; // Moved to a state variable
 
   @override
   Widget build(BuildContext context) {
@@ -17,233 +18,256 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
       appBar: AppBar(
         title: const Text(
           'Canteen Menu',
-          style: TextStyle(color: Colors.white), // White text
+          style: TextStyle(color: Colors.white),
         ),
-  backgroundColor: Colors.lightGreen.shade700, // Same green color as before
-        elevation: 4.0, // Slight shadow for depth
-  iconTheme: const IconThemeData(color: Colors.white), // White back button icon
+        backgroundColor: Colors.lightGreen.shade700,
+        elevation: 4.0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-
-
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.lightGreen.shade100],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildMenuSection('Breakfast', 'Menu_Breakfast'),
+            _buildMenuSection('Lunch', 'Menu_Lunch'),
+          ],
         ),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('Menu').snapshots(),
-          builder: (context, snapshots) {
-            if (snapshots.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          FloatingActionButton(
+            onPressed: _addMenuItem,
+            backgroundColor: Colors.blue.shade700,
+            child: const Icon(Icons.add),
+          ),
+          FloatingActionButton(
+            onPressed: _saveChanges,
+            backgroundColor: Colors.green.shade700,
+            child: const Icon(Icons.save),
+          ),
+        ],
+      ),
+    );
+  }
 
-            if (snapshots.hasError) {
-              return const Center(child: Text('Error loading menu data.'));
-            }
+  Widget _buildMenuSection(String title, String collectionName) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+        ),
+      ),
+      StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection(collectionName).snapshots(),
+        builder: (context, snapshots) {
+          if (snapshots.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            if (!snapshots.hasData || snapshots.data!.docs.isEmpty) {
-              return const Center(child: Text('No menu items available.'));
-            }
+          if (snapshots.hasError) {
+            return Center(child: Text('Error: ${snapshots.error}'));
+          }
 
-            var menuItems = snapshots.data!.docs;
+          if (!snapshots.hasData || snapshots.data!.docs.isEmpty) {
+            return const Center(child: Text('No menu items available.'));
+          }
 
-            return Stack(
-              children: [
-                ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: menuItems.length,
-                  itemBuilder: (context, index) {
-                    var document = menuItems[index];
-                    var itemName = document.get('Item Name') ?? 'Unnamed Item';
-                    var stock = document.get('Stock') ?? 0;
-                    var price = document.get('Price') ?? 0.0;
+          var menuItems = snapshots.data!.docs;
 
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      elevation: 6,
-                      shadowColor: Colors.green.shade200,
-                      margin: const EdgeInsets.only(bottom: 16.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              itemName,
-                              style: const TextStyle(
-                                fontSize: 22.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Text(
-                              'Stock: $stock',
-                              style: const TextStyle(fontSize: 18.0),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Text(
-                              'Price: Rs $price',
-                              style: const TextStyle(fontSize: 18.0),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16.0),
-                            ElevatedButton(
-                              onPressed: () =>
-                                  _editItem(context, document.id, stock, price),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Colors.green.shade400.withOpacity(0.85),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                              ),
-                              child: const Text('Edit'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            itemCount: menuItems.length,
+            itemBuilder: (context, index) {
+              var document = menuItems[index];
+              var data = document.data() as Map<String, dynamic>? ?? {};
+              String itemId = document.id;
+
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                Positioned(
-                  bottom: 16.0,
-                  left: MediaQuery.of(context).size.width * 0.2,
-                  right: MediaQuery.of(context).size.width * 0.2,
-                  child: ElevatedButton(
-                    onPressed: _saveChanges,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                    ),
-                    child: const Text(
-                      'Save Changes',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16.0),
+                  title: Text(
+                    data['Item_Name'] ?? 'Unnamed Item',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    'Stock: ${data['Stock']}, Price: Rs ${data['Price']}',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  onTap: () => _editMenuItem(itemId, collectionName, data),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteMenuItem(itemId, collectionName),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       ),
-    );
-  }
+    ],
+  );
+}
 
-  void _editItem(BuildContext context, String docId, int stock, double price) {
-    final stockController = TextEditingController(text: stock.toString());
-    final priceController = TextEditingController(text: price.toString());
+  void _addMenuItem() {
+  String itemName = '';
+  int stock = 0;
+  double price = 0.0;
+  String category = 'Menu_Breakfast';
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Item'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: stockController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Stock'),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Add Menu Item'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Item Name'),
+                  onChanged: (value) => itemName = value,
+                ),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Stock'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => stock = int.tryParse(value) ?? 0,
+                ),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => price = double.tryParse(value) ?? 0.0,
+                ),
+                DropdownButton<String>(
+                  value: category,
+                  items: const [
+                    DropdownMenuItem(value: 'Menu_Breakfast', child: Text('Breakfast')),
+                    DropdownMenuItem(value: 'Menu_Lunch', child: Text('Lunch')),
+                  ],
+                  onChanged: (value) {
+                    setDialogState(() { // Use setDialogState to update only the dropdown
+                      category = value!;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              TextField(
-                controller: priceController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Price'),
+              TextButton(
+                onPressed: () async {
+                  if (itemName.isNotEmpty) {
+                    await FirebaseFirestore.instance.collection(category).add({
+                      'Item_Name': itemName,
+                      'Stock': stock,
+                      'Price': price,
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Add'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+          );
+        },
+      );
+    },
+  );
+}
+
+void _editMenuItem(String itemId, String collectionName, Map<String, dynamic> data) {
+  TextEditingController stockController = TextEditingController(text: data['Stock'].toString());
+  TextEditingController priceController = TextEditingController(text: data['Price'].toString());
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Edit Menu Item'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: stockController,
+              decoration: const InputDecoration(labelText: 'Stock'),
+              keyboardType: TextInputType.number,
             ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _editedItems.removeWhere((item) => item['id'] == docId);
-                  _editedItems.add({
-                    'id': docId,
-                    'Stock': int.tryParse(stockController.text) ?? stock,
-                    'Price': double.tryParse(priceController.text) ?? price,
-                  });
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
+            TextField(
+              controller: priceController,
+              decoration: const InputDecoration(labelText: 'Price'),
+              keyboardType: TextInputType.number,
             ),
           ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              int newStock = int.tryParse(stockController.text) ?? 0;
+              double newPrice = double.tryParse(priceController.text) ?? 0.0;
+
+              await FirebaseFirestore.instance.collection(collectionName).doc(itemId).update({
+                'Stock': newStock,
+                'Price': newPrice,
+              });
+
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _deleteMenuItem(String itemId, String collectionName) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Delete Item'),
+        content: const Text('Are you sure you want to delete this item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await FirebaseFirestore.instance.collection(collectionName).doc(itemId).delete();
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+
+  void _saveChanges() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Changes saved successfully.')),
     );
-  }
-
-  void _saveChanges() async {
-    if (_editedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No changes to save.')),
-      );
-      return;
-    }
-
-    bool confirm = await _showConfirmDialog();
-    if (!confirm) return;
-
-    try {
-      for (var item in _editedItems) {
-        await FirebaseFirestore.instance
-            .collection('Menu')
-            .doc(item['id'])
-            .update({'Stock': item['Stock'], 'Price': item['Price']});
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Changes saved successfully.')),
-      );
-      setState(() {
-        _editedItems.clear();
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save changes.')),
-      );
-    }
-  }
-
-  Future<bool> _showConfirmDialog() async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Confirm Save'),
-              content:
-                  const Text('Are you sure you want to save these changes?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('No'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Yes'),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
   }
 }

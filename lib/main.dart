@@ -7,15 +7,10 @@ import 'package:gitsbites/favorites_page.dart';
 import 'package:gitsbites/bottom_nav.dart';
 import 'package:gitsbites/payment.dart';
 import 'package:gitsbites/preorder1.dart';
-import 'package:table_calendar/table_calendar.dart'; // Import table_calendar package
+import 'package:gitsbites/admin_menu.dart'; // Import admin_menu.dart
+import 'package:table_calendar/table_calendar.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'dart:typed_data'; // Import dart:typed_data package
-import 'package:gitsbites/login.dart'; // Add this import for the login page
-import 'package:gitsbites/google_pay_page.dart'; // Add this import for Google Pay page
-import 'package:gitsbites/order_placed_page.dart'; // Add this import for Order Placed page
-import 'package:gitsbites/admin.dart';
-import 'package:gitsbites/admin_menu.dart';
-import 'package:gitsbites/admin_pending_orders.dart';
+import 'login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,33 +36,26 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kioski App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      initialRoute: '/login', // Set initial route to '/login'
-      routes: {
-        '/login': (context) => const LoginPage(), // Define route for login page
-        '/home': (context) => const HomePage(),
-        '/favorites': (context) => const FavoritesPage(),
-        '/cart': (context) => const CartPage(),
-        '/profile': (context) => const ProfilePage(),
-        '/payment': (context) =>
-            const PaymentPage(totalAmount: 0, cartItems: []),
-        '/preorder': (context) => const PreOrderPage(),
-        '/breakfast': (context) => const BreakfastPage(),
-        '/lunch': (context) => const LunchPage(),
-        '/google_pay': (context) =>
-            const GooglePayPage(), // Add GooglePayPage route
-        '/order_placed': (context) => OrderPlacedPage(
-            receiptPdf: Uint8List(0)), // Add OrderPlacedPage route
-        '/admin': (context) => const AdminPage(), // Admin Dashboard
-        '/admin_menu': (context) => const AdminMenuPage(), // Admin Menu Page
-        '/admin_pending_orders': (context) =>
-            const AdminPendingOrdersPage(), // Admin Pending Orders Page
-      },
-    );
+        title: 'Kiosk App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+        ),
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginPage(),
+          '/home': (context) => const HomePage(),
+          '/favorites': (context) => const FavoritesPage(),
+          '/cart': (context) => const CartPage(),
+          '/profile': (context) => const ProfilePage(),
+          '/payment': (context) =>
+              const PaymentPage(totalAmount: 0, cartItems: []),
+          '/preorder': (context) => const PreOrderPage(),
+          '/breakfast': (context) => const BreakfastPage(),
+          '/lunch': (context) => const LunchPage(),
+          '/admin_menu': (context) =>
+              const AdminMenuPage(), // Added Admin Menu route
+        });
   }
 }
 
@@ -255,30 +243,6 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20), // Spacing between buttons
                 // Login Button
-                SizedBox(
-                  width: 200,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.pushNamed(
-                          context, '/login'); // Navigate to Login Page
-                    },
-                    child: const Text(
-                      'LOGIN',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
