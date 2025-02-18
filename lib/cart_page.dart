@@ -230,17 +230,55 @@ class _CartPageState extends State<CartPage> {
                     const SizedBox(height: 16),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentPage(
-                              totalAmount: calculateTotalPrice(),
-                              cartItems: List.from(cartItems), // Pass items
-                              userName: userName,
-                              userEmail: userEmail,
+                        if (calculateTotalPrice() <= 0) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                title: const Text(
+                                  'Empty Cart',
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                content: const Text(
+                                  'The cart is empty. Add items to proceed.',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    child: const Text(
+                                      'OK',
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentPage(
+                                totalAmount: calculateTotalPrice(),
+                                cartItems: List.from(cartItems),
+                                userName: userName,
+                                userEmail: userEmail,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       },
                       child: Container(
                         width: double.infinity,
