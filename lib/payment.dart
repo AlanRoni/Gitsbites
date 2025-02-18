@@ -265,16 +265,17 @@ class _PaymentPageState extends State<PaymentPage> {
   Future<void> _saveOrderToFirestore(
       int totalAmount, List<Map<String, dynamic>> cartItems) async {
     try {
-      // Create a new document in the 'user' collection
-      await _firestore.collection('user').add({
-        // Store the user ID to link the order to a user
-        'userName': widget.userName, // Use widget.userName here
-        'userEmail': widget.userEmail, // Use widget.userEmail here
+      // Create a new document in the 'orders' collection
+      await _firestore.collection('orders').add({
+        'userName': widget.userName,
+        'userEmail': widget.userEmail,
         'totalAmount': totalAmount,
         'paymentMethod': selectedPaymentMethod,
         'transactionId': '#554732223687',
-        'date': _getCurrentDate(),
+        'orderDate': DateTime.now(),
         'items': cartItems,
+        'status': 'pending', // Add status field
+        'orderNumber': DateTime.now().millisecondsSinceEpoch.toString(),
       });
     } catch (e) {
       print('Error saving order to Firestore: $e');
@@ -532,5 +533,93 @@ class _PaymentPageState extends State<PaymentPage> {
   String _getCurrentDate() {
     final now = DateTime.now();
     return "${now.day}/${now.month}/${now.year}";
+  }
+
+  void _handlePayment() {
+    if (selectedPaymentMethod == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a payment method')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: const Column(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 50,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Payment Successful!',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Your order has been confirmed.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Amount Paid: Rs. ${widget.totalAmount}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Navigate to home page and clear the stack
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/home',
+                    (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -16,6 +16,13 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+                context, '/home'); // Changed this line
+          },
+        ),
         title: const Text(
           'Canteen Menu',
           style: TextStyle(color: Colors.white),

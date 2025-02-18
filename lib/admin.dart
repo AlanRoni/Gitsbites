@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
@@ -7,21 +8,20 @@ class AdminPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/home');
+          },
         ),
-        centerTitle: true,
-        backgroundColor: Colors.green.shade700,
-        elevation: 4.0,
-        shadowColor: Colors.grey.shade300,
-        iconTheme:
-            const IconThemeData(color: Colors.white), // White back button
+        title: const Text('Admin Dashboard',
+            style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green,
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.green.shade100],
+            colors: [Colors.white, Color(0xFFA8D5A3)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -30,35 +30,30 @@ class AdminPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Menu Button
+              // Pending Orders Button
               SizedBox(
-                width: MediaQuery.of(context).size.width *
-                    0.8, // 80% of screen width
-                height: 100, // Increased height
+                width: 200,
+                height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    elevation: 8, // Add shadow
-                    padding: const EdgeInsets.all(16), // Add padding
                   ),
                   onPressed: () {
-                    // Navigate to the Admin Menu Page
-                    Navigator.pushNamed(context, '/admin_menu');
+                    Navigator.pushNamed(context, '/admin_pending_orders');
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.menu_book,
-                          color: Colors.white, size: 30), // Add icon
-                      SizedBox(width: 10), // Space between icon and text
+                      Icon(Icons.pending_actions, color: Colors.white),
+                      SizedBox(width: 8),
                       Text(
-                        'Menu',
+                        'PENDING ORDERS',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24, // Increased font size
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -66,36 +61,32 @@ class AdminPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 30), // Increased spacing between buttons
-              // Pending Orders Button
+              const SizedBox(height: 20),
+              // Manage Menu Button
               SizedBox(
-                width: MediaQuery.of(context).size.width *
-                    0.8, // 80% of screen width
-                height: 100, // Increased height
+                width: 200,
+                height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade700,
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    elevation: 8, // Add shadow
-                    padding: const EdgeInsets.all(16), // Add padding
                   ),
                   onPressed: () {
-                    // Navigate to the Pending Orders Page
-                    Navigator.pushNamed(context, '/admin_pending_orders');
+                    Navigator.pushNamed(
+                        context, '/admin_menu'); // Updated this line
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.list_alt,
-                          color: Colors.white, size: 30), // Add icon
-                      SizedBox(width: 10), // Space between icon and text
+                      Icon(Icons.restaurant_menu, color: Colors.white),
+                      SizedBox(width: 8),
                       Text(
-                        'Pending Orders',
+                        'MANAGE MENU',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24, // Increased font size
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

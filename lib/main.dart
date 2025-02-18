@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:table_calendar/table_calendar.dart';
+// Pages
 import 'package:gitsbites/breakfast.dart';
 import 'package:gitsbites/lunch.dart';
 import 'package:gitsbites/cart_page.dart';
@@ -7,16 +11,10 @@ import 'package:gitsbites/favorites_page.dart';
 import 'package:gitsbites/bottom_nav.dart';
 import 'package:gitsbites/payment.dart';
 import 'package:gitsbites/preorder1.dart';
-import 'package:table_calendar/table_calendar.dart'; // Import table_calendar package
-import 'package:firebase_core/firebase_core.dart';
-import 'cart_page.dart';
-import 'profile_page.dart';
-import 'favorites_page.dart';
-import 'bottom_nav.dart';
-import 'payment.dart';
-import 'preorder1.dart';
-import 'login.dart'; // Add this import for the login page
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:gitsbites/login.dart';
+import 'package:gitsbites/admin.dart';
+import 'package:gitsbites/admin_pending_orders.dart';
+import 'package:gitsbites/admin_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,38 +40,39 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Kioski App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green,
-        ),
-        initialRoute: '/login', // Set initial route to '/login'
-        routes: {
-          '/login': (context) =>
-              const LoginPage(), // Define route for login page
-          '/home': (context) => const HomePage(),
-          '/favorites': (context) => const FavoritesPage(),
-          '/cart': (context) => const CartPage(),
-          '/profile': (context) => const ProfilePage(),
-          '/payment': (context) {
-            final user = FirebaseAuth.instance.currentUser;
-            if (user != null) {
-              // If user is logged in, pass their details to PaymentPage
-              return PaymentPage(
-                totalAmount: 0,
-                cartItems: [],
-                userName: user.displayName ?? 'Guest', // userName from Firebase
-                userEmail: user.email ?? 'No Email', // userEmail from Firebase
-              );
-            } else {
-              // If no user is logged in, navigate to the login page
-              return const LoginPage();
-            }
-          },
-          '/preorder': (context) => const PreOrderPage(),
-          '/breakfast': (context) => const BreakfastPage(),
-          '/lunch': (context) => const LunchPage(),
-        });
+      title: 'GitsBites',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+      ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(),
+        '/favorites': (context) => const FavoritesPage(),
+        '/cart': (context) => const CartPage(),
+        '/profile': (context) => const ProfilePage(),
+        '/payment': (context) {
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            return PaymentPage(
+              totalAmount: 0,
+              cartItems: [],
+              userName: user.displayName ?? 'Guest',
+              userEmail: user.email ?? 'No Email',
+            );
+          } else {
+            return const LoginPage();
+          }
+        },
+        '/preorder': (context) => const PreOrderPage(),
+        '/breakfast': (context) => const BreakfastPage(),
+        '/lunch': (context) => const LunchPage(),
+        '/admin': (context) => const AdminPage(),
+        '/admin_pending_orders': (context) => const AdminPendingOrdersPage(),
+        '/admin_menu': (context) => const AdminMenuPage(),
+      },
+    );
   }
 }
 
@@ -257,6 +256,38 @@ class HomePage extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // Spacing between buttons
+                // Admin Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/admin');
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.admin_panel_settings, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'ADMIN',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
