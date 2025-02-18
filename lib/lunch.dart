@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'bottom_nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,6 +10,65 @@ class LunchPage extends StatefulWidget {
 }
 
 class _LunchPageState extends State<LunchPage> {
+  final List<Map<String, dynamic>> menuItems = [
+    {
+      "name": "Biriyani",
+      "price": 110,
+      "image": "assets/biriyani.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Meals",
+      "price": 100,
+      "image": "assets/meals.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Fish Fry",
+      "price": 30,
+      "image": "assets/fishfry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Chicken Curry",
+      "price": 60,
+      "image": "assets/chickencurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": " Porotta",
+      "price": 12,
+      "image": "assets/porotta.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": " Chapati",
+      "price": 10,
+      "image": "assets/chapati.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Egg Curry",
+      "price": 40,
+      "image": "assets/eggcurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+  ];
+
   final List<Map<String, dynamic>> favoriteItems = [];
   final List<Map<String, dynamic>> cartItems = [];
   double totalPrice = 0.0;
@@ -137,15 +195,15 @@ class _LunchPageState extends State<LunchPage> {
           return ListView.builder(
             itemCount: menuItems.length,
             padding: const EdgeInsets.only(bottom: 80),
+            padding: const EdgeInsets.only(bottom: 80),
             itemBuilder: (context, index) {
               final item = menuItems[index];
-              final itemData = item.data() as Map<String, dynamic>;
-
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                elevation: 5,
                 elevation: 5,
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -220,18 +278,26 @@ class _LunchPageState extends State<LunchPage> {
                 ),
               );
             },
-          );
-        },
+          ),
+        ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 3,
+        currentIndex: 1,
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites');
+            Navigator.pushReplacementNamed(
+              context,
+              '/favorites',
+              arguments: favoriteItems, // Pass favoriteItems to FavoritesPage
+            );
           } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
+            Navigator.pushReplacementNamed(
+              context,
+              '/cart',
+              arguments: cartItems, // Pass cartItems to CartPage
+            );
           } else if (index == 3) {
             Navigator.pushReplacementNamed(context, '/profile');
           }
