@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -181,48 +180,84 @@ class _PaymentPageState extends State<PaymentPage> {
               GestureDetector(
                 onTap: () async {
                   if (selectedPaymentMethod != null) {
-                    // Generate the receipt
+                    // Generate the receipt and save order
                     await _generateReceipt(
                         widget.totalAmount, widget.cartItems);
-
-                    // Save order details to Firestore
                     await _saveOrderToFirestore(
                         widget.totalAmount, widget.cartItems);
 
-                    // Show Thank You Message
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Thank You!'),
-                        content: const Text('Your order has been confirmed.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // Close dialog
-                              Navigator.pop(
-                                  context); // Navigate back to home page
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
+                    if (mounted) {
+                      // Show confirmation popup
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            title: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 50,
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  'Order Confirmed!',
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            content: const Text(
+                              'Your order has been placed successfully.',
+                              textAlign: TextAlign.center,
+                            ),
+                            actions: [
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pushNamedAndRemoveUntil(
+                                      context,
+                                      '/home',
+                                      (route) => false,
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'OK',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
                   } else {
                     // Show error message if no payment method is selected
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Error'),
-                        content: const Text('Please select a payment method.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // Close dialog
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Please select a payment method')),
                     );
                   }
                 },
@@ -286,83 +321,13 @@ class _PaymentPageState extends State<PaymentPage> {
         'status': 'pending',
         'transactionId': '#${orderNumber.substring(orderNumber.length - 6)}',
       });
-
-      // Show success dialog
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            title: const Column(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 50),
-                SizedBox(height: 10),
-                Text(
-                  'Order Confirmed!',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Your order has been placed successfully.'),
-                  const SizedBox(height: 10),
-                  Text('Order #: $orderNumber'),
-                  Text('Total Amount: Rs. $totalAmount'),
-                ],
-              ),
-            ),
-            actions: [
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Generate receipt and navigate home
-                    _generateReceipt(totalAmount, cartItems).then((_) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/home',
-                        (route) => false,
-                      );
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      );
     } catch (e) {
       print('Error saving order: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error placing order: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error placing order: $e')),
+        );
+      }
     }
   }
 
@@ -617,93 +582,5 @@ class _PaymentPageState extends State<PaymentPage> {
   String _getCurrentDate() {
     final now = DateTime.now();
     return "${now.day}/${now.month}/${now.year}";
-  }
-
-  void _handlePayment() {
-    if (selectedPaymentMethod == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a payment method')),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: const Column(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 50,
-              ),
-              SizedBox(height: 10),
-              Text(
-                'Payment Successful!',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Your order has been confirmed.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Amount Paid: Rs. ${widget.totalAmount}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to home page and clear the stack
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/home',
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 }
