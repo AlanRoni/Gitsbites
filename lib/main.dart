@@ -11,6 +11,8 @@ import 'package:gitsbites/admin_menu.dart'; // Import admin_menu.dart
 import 'package:table_calendar/table_calendar.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'login.dart';
+import 'admin.dart';
+import 'admin_pending_orders.dart'; // Import admin_pending_orders.dart
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +55,9 @@ class MyApp extends StatelessWidget {
           '/preorder': (context) => const PreOrderPage(),
           '/breakfast': (context) => const BreakfastPage(),
           '/lunch': (context) => const LunchPage(),
+          '/admin': (context) => const AdminPage(), // Added Admin route
+          '/admin_pending_orders': (context) =>
+              const AdminPendingOrdersPage(), // Added Admin Pending Orders route
           '/admin_menu': (context) =>
               const AdminMenuPage(), // Added Admin Menu route
         });
