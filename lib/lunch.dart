@@ -16,26 +16,36 @@ class _LunchPageState extends State<LunchPage> {
   double totalPrice = 0.0;
 
   User? currentUser = FirebaseAuth.instance.currentUser;
-  void toggleFavorite(Map<String, dynamic> item) {
-    setState(() {
-      if (favoriteItems.contains(item)) {
-        favoriteItems.remove(item);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${item['Item_Name']} removed from favorites!"),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      } else {
-        favoriteItems.add(item);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${item['Item_Name']} added to favorites!"),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-    });
+  void toggleFavorite(Map<String, dynamic> item) async {
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in!')),
+      );
+      return;
+    }
+
+    final userFavoritesRef = FirebaseFirestore.instance
+        .collection('trial database')
+        .doc(currentUser!.uid)
+        .collection('favourites');
+
+    final querySnapshot = await userFavoritesRef
+        .where('Item_Name', isEqualTo: item['Item_Name'])
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      await querySnapshot.docs.first.reference.delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${item['Item_Name']} removed from favorites!")),
+      );
+    } else {
+      await userFavoritesRef.add(item);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${item['Item_Name']} added to favorites!")),
+      );
+    }
+    setState(() {});
   }
 
   void addToCart(Map<String, dynamic> item) async {

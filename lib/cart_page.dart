@@ -34,8 +34,16 @@ class _CartPageState extends State<CartPage> {
       double total = 0.0;
       for (var doc in snapshot.docs) {
         var data = doc.data();
+
+        // Ensuring null checks for each field
+        String itemName =
+            data['Item_Name'] ?? "Unnamed Item"; // fallback if null
+        String image = data['image'] ?? ""; // fallback if null
+        double price = data['Price']?.toDouble() ?? 0.0; // fallback if null
+        int quantity = data['quantity']?.toInt() ?? 1; // fallback if null
+
         items.add(data);
-        total += data['Price'] * data['quantity'];
+        total += price * quantity;
       }
       setState(() {
         cartItems = items;
@@ -71,7 +79,8 @@ class _CartPageState extends State<CartPage> {
           .collection('cart')
           .doc(cartItems[index]['Item_Name']);
 
-      await cartRef.update({'quantity': cartItems[index]['quantity']});
+      double quantity = cartItems[index]['quantity']?.toDouble() ?? 1.0;
+      await cartRef.update({'quantity': quantity});
     }
   }
 
@@ -99,7 +108,9 @@ class _CartPageState extends State<CartPage> {
   double calculateTotalPrice() {
     double total = 0.0;
     for (var item in cartItems) {
-      total += item['Price'] * item['quantity'];
+      double price = item['Price']?.toDouble() ?? 0.0; // fallback if null
+      int quantity = item['quantity']?.toInt() ?? 1; // fallback if null
+      total += price * quantity;
     }
     return total;
   }
@@ -131,44 +142,47 @@ class _CartPageState extends State<CartPage> {
           Column(
             children: [
               Expanded(
-                child: cartItems.isEmpty
-                    ? const Center(
+                child: ListView(
+                  children: [
+                    if (cartItems.isEmpty)
+                      const Center(
                         child: Text(
                           "Your cart is empty!",
                           style: TextStyle(fontSize: 18, color: Colors.grey),
                         ),
-                      )
-                    : ListView.builder(
-                        itemCount: cartItems.length,
-                        itemBuilder: (context, index) {
-                          final item = cartItems[index];
-                          return ListTile(
-                            leading: item['image'] != null
-                                ? Image.network(item['image'],
-                                    width: 60, height: 60)
-                                : const Icon(Icons.fastfood,
-                                    size: 60, color: Colors.grey),
-                            title: Text(item['Item_Name']),
-                            subtitle: Text('Price: Rs. ${item['Price']}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () => decreaseQuantity(index),
-                                  icon: const Icon(Icons.remove,
-                                      color: Colors.red),
-                                ),
-                                Text(item['quantity'].toString()),
-                                IconButton(
-                                  onPressed: () => increaseQuantity(index),
-                                  icon: const Icon(Icons.add,
-                                      color: Colors.green),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
                       ),
+                    ...cartItems.map((item) {
+                      String itemName = item['Item_Name'] ?? "Unnamed Item";
+                      String image = item['image'] ?? "";
+                      double price = item['Price']?.toDouble() ?? 0.0;
+                      int quantity = item['quantity']?.toInt() ?? 1;
+                      return ListTile(
+                        leading: image.isNotEmpty
+                            ? Image.network(image, width: 60, height: 60)
+                            : const Icon(Icons.fastfood,
+                                size: 60, color: Colors.grey),
+                        title: Text(itemName),
+                        subtitle: Text('Price: Rs. $price'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () =>
+                                  decreaseQuantity(cartItems.indexOf(item)),
+                              icon: const Icon(Icons.remove, color: Colors.red),
+                            ),
+                            Text(quantity.toString()),
+                            IconButton(
+                              onPressed: () =>
+                                  increaseQuantity(cartItems.indexOf(item)),
+                              icon: const Icon(Icons.add, color: Colors.green),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -184,29 +198,6 @@ class _CartPageState extends State<CartPage> {
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentPage(
-                              totalAmount: calculateTotalPrice().toInt(),
-                              cartItems: List.from(cartItems),
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                          'Proceed to Payment - Rs. ${calculateTotalPrice()}'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25)),
-                      ),
                     ),
                   ],
                 ),

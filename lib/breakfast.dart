@@ -11,38 +11,43 @@ class BreakfastPage extends StatefulWidget {
 }
 
 class _BreakfastPageState extends State<BreakfastPage> {
-  final List<Map<String, dynamic>> favoriteItems = [];
   final List<Map<String, dynamic>> cartItems = [];
-  double totalPrice = 0.0; // Variable to store the total price of the cart
-
-  // Get the current user ID from FirebaseAuth
+  double totalPrice = 0.0;
   User? currentUser = FirebaseAuth.instance.currentUser;
 
-  // Function to toggle favorite status
-  void toggleFavorite(Map<String, dynamic> item) {
-    setState(() {
-      if (favoriteItems.contains(item)) {
-        favoriteItems.remove(item);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${item['Item_Name']} removed from favorites!"),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      } else {
-        favoriteItems.add(item);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${item['Item_Name']} added to favorites!"),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-    });
+  // Function to toggle favorite status and update Firestore
+  void toggleFavorite(Map<String, dynamic> item) async {
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in!')),
+      );
+      return;
+    }
+
+    final userFavoritesRef = FirebaseFirestore.instance
+        .collection('trial database')
+        .doc(currentUser!.uid)
+        .collection('favourites');
+
+    final querySnapshot = await userFavoritesRef
+        .where('Item_Name', isEqualTo: item['Item_Name'])
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      await querySnapshot.docs.first.reference.delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${item['Item_Name']} removed from favorites!")),
+      );
+    } else {
+      await userFavoritesRef.add(item);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${item['Item_Name']} added to favorites!")),
+      );
+    }
+    setState(() {});
   }
 
-  // Function to add item to the cart and save to Firestore
-  // Function to add item to the cart and save to Firestore
   void addToCart(Map<String, dynamic> item) async {
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,19 +62,16 @@ class _BreakfastPageState extends State<BreakfastPage> {
         .collection('cart');
 
     try {
-      // Check if the item already exists in the cart
       final querySnapshot = await userCartRef
           .where('Item_Name', isEqualTo: item['Item_Name'])
           .limit(1)
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        // If item exists, update the quantity
         final doc = querySnapshot.docs.first;
         final currentQuantity = doc['quantity'] ?? 1;
         await doc.reference.update({'quantity': currentQuantity + 1});
       } else {
-        // If item does not exist, add a new entry
         await userCartRef.add({
           'Item_Name': item['Item_Name'],
           'Price': item['Price'],
@@ -78,7 +80,6 @@ class _BreakfastPageState extends State<BreakfastPage> {
         });
       }
 
-      // Update the total price in Firestore
       totalPrice += item['Price'];
       final userDocRef = FirebaseFirestore.instance
           .collection('trial database')
@@ -87,13 +88,10 @@ class _BreakfastPageState extends State<BreakfastPage> {
           .set({'Total_Price': totalPrice}, SetOptions(merge: true));
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("${item['Item_Name']} added to cart!"),
-          duration: const Duration(seconds: 1),
-        ),
+        SnackBar(content: Text("${item['Item_Name']} added to cart!")),
       );
 
-      setState(() {}); // Refresh UI to reflect changes
+      setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding item to cart: $e')),
@@ -110,20 +108,17 @@ class _BreakfastPageState extends State<BreakfastPage> {
         backgroundColor: Colors.green,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Stream for menu items
         stream: FirebaseFirestore.instance
             .collection('Menu_Breakfast')
-            .where('Stock', isGreaterThan: 0) // Show only items with stock > 0
+            .where('Stock', isGreaterThan: 0)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text('No breakfast items available.'));
           }
@@ -150,12 +145,8 @@ class _BreakfastPageState extends State<BreakfastPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: itemData.containsKey("imageURL")
-                            ? Image.network(
-                                itemData["imageURL"],
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              )
+                            ? Image.network(itemData["imageURL"],
+                                width: 60, height: 60, fit: BoxFit.cover)
                             : const Icon(Icons.fastfood,
                                 size: 60, color: Colors.grey),
                       ),
@@ -167,17 +158,13 @@ class _BreakfastPageState extends State<BreakfastPage> {
                             Text(
                               itemData["Item_Name"] ?? "Unknown Item",
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                                  fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "INR ${itemData['Price'] ?? 'N/A'}",
                               style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
+                                  color: Colors.grey[600], fontSize: 14),
                             ),
                           ],
                         ),
@@ -185,28 +172,14 @@ class _BreakfastPageState extends State<BreakfastPage> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Cart Button with dynamic color change
                           IconButton(
-                            icon: Icon(
-                              cartItems.contains(itemData)
-                                  ? Icons.shopping_cart
-                                  : Icons.add_shopping_cart,
-                              color: cartItems.contains(itemData)
-                                  ? Colors.green
-                                  : Colors.grey,
-                            ),
+                            icon: const Icon(Icons.add_shopping_cart,
+                                color: Colors.grey),
                             onPressed: () => addToCart(itemData),
                           ),
-                          // Favorite Button
                           IconButton(
-                            icon: Icon(
-                              favoriteItems.contains(itemData)
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: favoriteItems.contains(itemData)
-                                  ? Colors.red
-                                  : Colors.grey,
-                            ),
+                            icon: const Icon(Icons.favorite_border,
+                                color: Colors.grey),
                             onPressed: () => toggleFavorite(itemData),
                           ),
                         ],
@@ -222,15 +195,8 @@ class _BreakfastPageState extends State<BreakfastPage> {
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 3,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
-          } else if (index == 3) {
-            Navigator.pushReplacementNamed(context, '/profile');
-          }
+          final routes = ['/home', '/favorites', '/cart', '/profile'];
+          Navigator.pushReplacementNamed(context, routes[index]);
         },
       ),
     );
