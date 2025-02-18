@@ -19,111 +19,142 @@ class _AdminMenuPageState extends State<AdminMenuPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushReplacementNamed(
-                context, '/home'); // Changed this line
+            Navigator.pushReplacementNamed(context, '/home');
           },
         ),
-        title: const Text(
-          'Canteen Menu',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.lightGreen.shade700,
-        elevation: 4.0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        title:
+            const Text('Canteen Menu', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green,
       ),
-      body: SingleChildScrollView(
-        child: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Color(0xFFA8D5A3)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 80), // Add padding for FAB
+            child: Column(
+              children: [
+                _buildMenuSection('Breakfast', 'Menu_Breakfast'),
+                _buildMenuSection('Lunch', 'Menu_Lunch'),
+              ],
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            _buildMenuSection('Breakfast', 'Menu_Breakfast'),
-            _buildMenuSection('Lunch', 'Menu_Lunch'),
+            FloatingActionButton(
+              heroTag: 'add',
+              onPressed: _addMenuItem,
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.add),
+            ),
+            const SizedBox(width: 16),
+            FloatingActionButton(
+              heroTag: 'save',
+              onPressed: _saveChanges,
+              backgroundColor: Colors.green,
+              child: const Icon(Icons.save),
+            ),
           ],
         ),
       ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          FloatingActionButton(
-            onPressed: _addMenuItem,
-            backgroundColor: Colors.blue.shade700,
-            child: const Icon(Icons.add),
-          ),
-          FloatingActionButton(
-            onPressed: _saveChanges,
-            backgroundColor: Colors.green.shade700,
-            child: const Icon(Icons.save),
-          ),
-        ],
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
   Widget _buildMenuSection(String title, String collectionName) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+    return Container(
+      margin: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
           ),
-        ),
-        StreamBuilder<QuerySnapshot>(
-          stream:
-              FirebaseFirestore.instance.collection(collectionName).snapshots(),
-          builder: (context, snapshots) {
-            if (snapshots.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection(collectionName)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
 
-            if (snapshots.hasError) {
-              return Center(child: Text('Error: ${snapshots.error}'));
-            }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (!snapshots.hasData || snapshots.data!.docs.isEmpty) {
-              return const Center(child: Text('No menu items available.'));
-            }
-
-            var menuItems = snapshots.data!.docs;
-
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                var document = menuItems[index];
-                var data = document.data() as Map<String, dynamic>? ?? {};
-                String itemId = document.id;
-
-                return Card(
-                  elevation: 3,
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16.0),
-                    title: Text(
-                      data['Item_Name'] ?? 'Unnamed Item',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      'Stock: ${data['Stock']}, Price: Rs ${data['Price']}',
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                    onTap: () => _editMenuItem(itemId, collectionName, data),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteMenuItem(itemId, collectionName),
-                    ),
+              final docs = snapshot.data?.docs ?? [];
+              if (docs.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No items available'),
                   ),
                 );
-              },
-            );
-          },
-        ),
-      ],
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final data = docs[index].data() as Map<String, dynamic>;
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: ListTile(
+                      title: Text(data['Item_Name'] ?? 'Unnamed Item'),
+                      subtitle: Text(
+                        'Stock: ${data['Stock']} | Price: ₹${data['Price']}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _editMenuItem(
+                              docs[index].id,
+                              collectionName,
+                              data,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteMenuItem(
+                              docs[index].id,
+                              collectionName,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

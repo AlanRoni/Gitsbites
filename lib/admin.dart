@@ -48,12 +48,12 @@ class AdminPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.pending_actions, color: Colors.white),
-                      SizedBox(width: 8),
+                      SizedBox(width: 10),
                       Text(
                         'PENDING ORDERS',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -86,7 +86,7 @@ class AdminPage extends StatelessWidget {
                         'MANAGE MENU',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
