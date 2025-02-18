@@ -17,8 +17,9 @@ class _CartPageState extends State<CartPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Retrieve the cart items passed as arguments
-    final List<Map<String, dynamic>>? newCartItems =
-        ModalRoute.of(context)?.settings.arguments as List<Map<String, dynamic>>?;
+    final List<Map<String, dynamic>>? newCartItems = ModalRoute.of(context)
+        ?.settings
+        .arguments as List<Map<String, dynamic>>?;
 
     if (newCartItems != null) {
       setState(() {
@@ -201,15 +202,42 @@ class _CartPageState extends State<CartPage> {
                     const SizedBox(height: 16),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentPage(
-                              totalAmount: calculateTotalPrice(),
-                              cartItems: List.from(cartItems), // Pass items
+                        if (calculateTotalPrice() == 0) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Empty Cart'),
+                                content: const Text(
+                                    'The cart is empty. Add items to proceed.'),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    child: const Text(
+                                      'OK',
+                                      style: TextStyle(color: Colors.green),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentPage(
+                                totalAmount: calculateTotalPrice(),
+                                cartItems: List.from(cartItems),
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       },
                       child: Container(
                         width: double.infinity,

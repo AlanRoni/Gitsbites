@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "Menu",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "Stock",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
