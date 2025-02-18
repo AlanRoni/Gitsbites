@@ -38,36 +38,49 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> createUserDocument(User user) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    DocumentReference userDoc = firestore.collection('users').doc(user.uid);
+    // Reference to the "trial database" collection
+    CollectionReference usersCollection =
+        firestore.collection('trial database');
 
     try {
-      final docSnapshot = await userDoc.get();
+      final docSnapshot = await usersCollection.doc(user.uid).get();
 
       if (!docSnapshot.exists) {
-        final usersSnapshot = await firestore
-            .collection('users')
+        // Get the last user document to find the highest ID
+        final lastUserSnapshot = await usersCollection
             .orderBy('userId', descending: true)
             .limit(1)
             .get();
         int newUserId = 1;
-        if (usersSnapshot.docs.isNotEmpty) {
-          newUserId = usersSnapshot.docs.first['userId'] + 1;
+        if (lastUserSnapshot.docs.isNotEmpty) {
+          // Increment the highest userId by 1
+          newUserId = lastUserSnapshot.docs.first['userId'] + 1;
         }
 
-        await userDoc.set({
+        // Add the user document with auto-incremented userId
+        await usersCollection.doc(user.uid).set({
           'userId': newUserId,
           'email': user.email,
         });
 
-        await userDoc.collection('cart').doc('sample_cart_id').set({
+        // Optionally, you can also create subcollections like 'cart' and 'favourites' here as well:
+        await usersCollection
+            .doc(user.uid)
+            .collection('cart')
+            .doc('sample_cart_id')
+            .set({
           'items': [],
         });
 
-        await userDoc.collection('favourites').doc('sample_fav_id').set({
+        await usersCollection
+            .doc(user.uid)
+            .collection('favourites')
+            .doc('sample_fav_id')
+            .set({
           'items': [],
         });
 
-        print('User document created successfully!');
+        print('User document created successfully in "trial database"!');
       } else {
         print('User document already exists');
       }
