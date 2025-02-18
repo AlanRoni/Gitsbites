@@ -11,7 +11,7 @@ class FavoritesPage extends StatefulWidget {
 
 class _FavoritesPageState extends State<FavoritesPage> {
   List<Map<String, dynamic>> favoriteItems = [];
-  List<Map<String, dynamic>> _cartItems = []; // Cart items list
+  final List<Map<String, dynamic>> _cartItems = []; // Cart items list
 
   void removeItem(int index) {
     setState(() {
@@ -60,7 +60,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CartPage(),
+                  builder: (context) => const CartPage(),
                   settings:
                       RouteSettings(arguments: _cartItems), // Pass cart items
                 ),
@@ -162,12 +162,14 @@ class _FavoritesPageState extends State<FavoritesPage> {
         currentIndex: 1,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1)
+          if (index == 1) {
             Navigator.pushReplacementNamed(context, '/favorites',
                 arguments: favoriteItems);
-          if (index == 2)
+          }
+          if (index == 2) {
             Navigator.pushReplacementNamed(context, '/cart',
                 arguments: _cartItems);
+          }
           if (index == 3) Navigator.pushReplacementNamed(context, '/profile');
         },
       ),

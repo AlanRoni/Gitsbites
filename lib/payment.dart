@@ -180,48 +180,84 @@ class _PaymentPageState extends State<PaymentPage> {
               GestureDetector(
                 onTap: () async {
                   if (selectedPaymentMethod != null) {
-                    // Generate the receipt
+                    // Generate the receipt and save order
                     await _generateReceipt(
                         widget.totalAmount, widget.cartItems);
-
-                    // Save order details to Firestore
                     await _saveOrderToFirestore(
                         widget.totalAmount, widget.cartItems);
 
-                    // Show Thank You Message
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Thank You!'),
-                        content: const Text('Your order has been confirmed.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // Close dialog
-                              Navigator.pop(
-                                  context); // Navigate back to home page
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
+                    if (mounted) {
+                      // Show confirmation popup
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            title: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 50,
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  'Order Confirmed!',
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            content: const Text(
+                              'Your order has been placed successfully.',
+                              textAlign: TextAlign.center,
+                            ),
+                            actions: [
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pushNamedAndRemoveUntil(
+                                      context,
+                                      '/home',
+                                      (route) => false,
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'OK',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
                   } else {
                     // Show error message if no payment method is selected
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Error'),
-                        content: const Text('Please select a payment method.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // Close dialog
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Please select a payment method')),
                     );
                   }
                 },
@@ -265,19 +301,33 @@ class _PaymentPageState extends State<PaymentPage> {
   Future<void> _saveOrderToFirestore(
       int totalAmount, List<Map<String, dynamic>> cartItems) async {
     try {
-      // Create a new document in the 'user' collection
-      await _firestore.collection('user').add({
-        // Store the user ID to link the order to a user
-        'userName': widget.userName, // Use widget.userName here
-        'userEmail': widget.userEmail, // Use widget.userEmail here
+      final orderNumber = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Create new order document in Firestore
+      await _firestore.collection('orders').add({
+        'orderNumber': orderNumber,
+        'userName': widget.userName,
+        'userEmail': widget.userEmail,
         'totalAmount': totalAmount,
         'paymentMethod': selectedPaymentMethod,
-        'transactionId': '#554732223687',
-        'date': _getCurrentDate(),
-        'items': cartItems,
+        'orderDate': DateTime.now(),
+        'items': cartItems
+            .map((item) => {
+                  'name': item['name'],
+                  'price': item['price'],
+                  'quantity': item['quantity'],
+                })
+            .toList(),
+        'status': 'pending',
+        'transactionId': '#${orderNumber.substring(orderNumber.length - 6)}',
       });
     } catch (e) {
-      print('Error saving order to Firestore: $e');
+      print('Error saving order: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error placing order: $e')),
+        );
+      }
     }
   }
 
