@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'payment.dart';
 import 'bottom_nav.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -10,8 +12,9 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // This will hold the list of cart items passed as arguments
   List<Map<String, dynamic>> cartItems = [];
+  String userName = '';
+  String userEmail = '';
 
   @override
   void didChangeDependencies() {
@@ -25,6 +28,31 @@ class _CartPageState extends State<CartPage> {
       setState(() {
         cartItems = newCartItems;
       });
+    }
+
+    _getUserDetails();
+  }
+
+  // Function to get user details from Firestore based on UID
+  Future<void> _getUserDetails() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            final data = userDoc.data() as Map<String, dynamic>;
+            userName = data['name'] ?? 'Unknown';
+            userEmail = data['email'] ?? 'Unknown';
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching user details: $e");
     }
   }
 
@@ -202,42 +230,17 @@ class _CartPageState extends State<CartPage> {
                     const SizedBox(height: 16),
                     GestureDetector(
                       onTap: () {
-                        if (calculateTotalPrice() == 0) {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Empty Cart'),
-                                content: const Text(
-                                    'The cart is empty. Add items to proceed.'),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    child: const Text(
-                                      'OK',
-                                      style: TextStyle(color: Colors.green),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PaymentPage(
-                                totalAmount: calculateTotalPrice(),
-                                cartItems: List.from(cartItems),
-                              ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentPage(
+                              totalAmount: calculateTotalPrice(),
+                              cartItems: List.from(cartItems), // Pass items
+                              userName: userName,
+                              userEmail: userEmail,
                             ),
-                          );
-                        }
+                          ),
+                        );
                       },
                       child: Container(
                         width: double.infinity,

@@ -7,18 +7,22 @@ import 'package:gitsbites/favorites_page.dart';
 import 'package:gitsbites/bottom_nav.dart';
 import 'package:gitsbites/payment.dart';
 import 'package:gitsbites/preorder1.dart';
-import 'package:gitsbites/admin_menu.dart'; // Import admin_menu.dart
-import 'package:table_calendar/table_calendar.dart';
+import 'package:table_calendar/table_calendar.dart'; // Import table_calendar package
 import 'package:firebase_core/firebase_core.dart';
-import 'login.dart';
-import 'admin.dart';
-import 'admin_pending_orders.dart'; // Import admin_pending_orders.dart
+import 'cart_page.dart';
+import 'profile_page.dart';
+import 'favorites_page.dart';
+import 'bottom_nav.dart';
+import 'payment.dart';
+import 'preorder1.dart';
+import 'login.dart'; // Add this import for the login page
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
-    options: FirebaseOptions(
+    options: const FirebaseOptions(
       apiKey: 'AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0',
       authDomain: 'gitsbites.firebaseapp.com',
       projectId: 'gitsbites',
@@ -38,28 +42,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Kiosk App',
+        title: 'Kioski App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.green,
         ),
-        initialRoute: '/login',
+        initialRoute: '/login', // Set initial route to '/login'
         routes: {
-          '/login': (context) => const LoginPage(),
+          '/login': (context) =>
+              const LoginPage(), // Define route for login page
           '/home': (context) => const HomePage(),
           '/favorites': (context) => const FavoritesPage(),
           '/cart': (context) => const CartPage(),
           '/profile': (context) => const ProfilePage(),
-          '/payment': (context) =>
-              const PaymentPage(totalAmount: 0, cartItems: []),
+          '/payment': (context) {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              // If user is logged in, pass their details to PaymentPage
+              return PaymentPage(
+                totalAmount: 0,
+                cartItems: [],
+                userName: user.displayName ?? 'Guest', // userName from Firebase
+                userEmail: user.email ?? 'No Email', // userEmail from Firebase
+              );
+            } else {
+              // If no user is logged in, navigate to the login page
+              return const LoginPage();
+            }
+          },
           '/preorder': (context) => const PreOrderPage(),
           '/breakfast': (context) => const BreakfastPage(),
           '/lunch': (context) => const LunchPage(),
-          '/admin': (context) => const AdminPage(), // Added Admin route
-          '/admin_pending_orders': (context) =>
-              const AdminPendingOrdersPage(), // Added Admin Pending Orders route
-          '/admin_menu': (context) =>
-              const AdminMenuPage(), // Added Admin Menu route
         });
   }
 }
@@ -111,9 +124,10 @@ class HomePage extends StatelessWidget {
                   color: Colors.green,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                leftChevronIcon:
+                    const Icon(Icons.chevron_left, color: Colors.white),
                 rightChevronIcon:
-                    Icon(Icons.chevron_right, color: Colors.white),
+                    const Icon(Icons.chevron_right, color: Colors.white),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
                 weekdayStyle: TextStyle(color: Colors.green.shade700),
@@ -140,15 +154,15 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
             Icon(
               Icons.home, // Using the home icon for the logo
               size: 24, // Adjust the size of the logo
               color: Colors.white,
             ),
-            const SizedBox(width: 8), // Space between the logo and title
-            const Text('Home', style: TextStyle(color: Colors.white)),
+            SizedBox(width: 8), // Space between the logo and title
+            Text('Home', style: TextStyle(color: Colors.white)),
           ],
         ),
         backgroundColor: Colors.green,
@@ -246,8 +260,6 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20), // Spacing between buttons
-                // Login Button
               ],
             ),
           ),

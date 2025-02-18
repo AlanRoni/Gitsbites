@@ -1,6 +1,6 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'main.dart';
 
@@ -18,65 +18,6 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isPasswordVisible = false;
 
-  // Function to sign in with email and password
-  Future<User?> signInWithEmailPassword(String email, String password) async {
-    try {
-      final UserCredential userCredential =
-          await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final User? user = userCredential.user;
-      return user;
-    } catch (e) {
-      print('Error signing in: $e');
-      return null;
-    }
-  }
-
-  // Function to create the user document and subcollections in Firestore
-  Future<void> createUserDocument(User user) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    DocumentReference userDoc = firestore.collection('users').doc(user.uid);
-
-    try {
-      final docSnapshot = await userDoc.get();
-
-      if (!docSnapshot.exists) {
-        final usersSnapshot = await firestore
-            .collection('users')
-            .orderBy('userId', descending: true)
-            .limit(1)
-            .get();
-        int newUserId = 1;
-        if (usersSnapshot.docs.isNotEmpty) {
-          newUserId = usersSnapshot.docs.first['userId'] + 1;
-        }
-
-        await userDoc.set({
-          'userId': newUserId,
-          'email': user.email,
-        });
-
-        await userDoc.collection('cart').doc('sample_cart_id').set({
-          'items': [],
-        });
-
-        await userDoc.collection('favourites').doc('sample_fav_id').set({
-          'items': [],
-        });
-
-        print('User document created successfully!');
-      } else {
-        print('User document already exists');
-      }
-    } catch (e) {
-      print('Error creating user document: $e');
-    }
-  }
-
-  // Login method
   Future<void> _login() async {
     final email = _emailController.text.trim();
 
@@ -89,25 +30,21 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      User? user = await signInWithEmailPassword(
-        email,
-        _passwordController.text.trim(),
+      // Sign in with Firebase Authentication
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: _passwordController.text.trim(),
       );
 
-      if (user != null) {
-        // After successful login, create the user document in Firestore
-        await createUserDocument(user);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login Successful!')),
+      );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login Successful!')),
-        );
-
-        // Navigate to the Home Page after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-      }
+      // Navigate to the Home Page after successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.message}')),
@@ -115,7 +52,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Google Sign-in method
   Future<void> _signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -130,6 +66,7 @@ class _LoginPageState extends State<LoginPage> {
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -140,8 +77,9 @@ class _LoginPageState extends State<LoginPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                'Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+          content:
+              Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!'),
+        ),
       );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Log in to your account',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey.shade700,
+                        color: Colors.grey.shade700, // Use .shade700 instead
                       ),
                     ),
                   ],
@@ -315,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: GestureDetector(
                   onTap: _signInWithGoogle, // Trigger Google Sign-In
                   child: RichText(
-                    text: TextSpan(
+                    text: const TextSpan(
                       text: "Don’t have an account? ",
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                       children: [
