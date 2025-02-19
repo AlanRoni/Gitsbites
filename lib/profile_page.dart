@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart' show ImagePicker, ImageSource;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'bottom_nav.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -13,19 +16,29 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
+  final _storage = FirebaseStorage.instance;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _reviewController = TextEditingController();
 
   bool _isEditing = false;
+  bool _isLoading = false;
+  File? _profilePicFile;
 
   // Fetch the user data from Firebase Auth and Firestore
   Future<void> _fetchUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      // Fill the text controllers with the user's data
       _nameController.text = user.displayName ?? '';
       _emailController.text = user.email ?? '';
+
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists && userDoc['profilePicUrl'] != null) {
+        setState(() {
+          _profilePicFile = null;
+        });
+      }
     }
   }
 
@@ -33,14 +46,26 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _saveProfile() async {
     final user = _auth.currentUser;
     if (user != null) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
-        // Update Firebase Authentication display name
+        String? profilePicUrl;
+        if (_profilePicFile != null) {
+          final storageRef =
+              _storage.ref().child('profile_pics/${user.uid}.jpg');
+          final uploadTask = storageRef.putFile(_profilePicFile!);
+          final snapshot = await uploadTask;
+          profilePicUrl = await snapshot.ref.getDownloadURL();
+        }
+
         await user.updateDisplayName(_nameController.text);
 
-        // Save the updated details in Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'name': _nameController.text,
           'email': _emailController.text,
+          'profilePicUrl': profilePicUrl,
         }, SetOptions(merge: true));
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -122,34 +147,36 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: Colors.green,
         elevation: 0,
       ),
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white, Color(0xFFA8D5A3)], // Gradient colors
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Background Gradient
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.white, Color(0xFFA8D5A3)], // Gradient colors
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
-          ),
-
-          // Profile Content
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Profile Picture and Name
-                Center(
-                  child: Column(
-                    children: [
-                      CircleAvatar(
+            // Profile Content
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Profile Picture and Name
+                    GestureDetector(
+                      onTap: _pickProfilePicture,
+                      child: CircleAvatar(
                         radius: 50,
-                        backgroundImage: const AssetImage(
-                          'assets/profile_pic.png', // Replace with actual image path
-                        ),
+                        backgroundImage: _profilePicFile != null
+                            ? FileImage(_profilePicFile!)
+                            : const AssetImage('assets/profile_pic.png')
+                                as ImageProvider,
                         backgroundColor: Colors.grey[200],
                         child: _profilePicFile == null
                             ? const Icon(Icons.camera_alt, color: Colors.white)
@@ -436,35 +463,21 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     const SizedBox(height: 20),
 
-                // Logout Button
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate back to the Login Page
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                    style: ElevatedButton.styleFrom(
+                    // Logout Button with glowing effect
+                    _buildGlowButton(
+                      onPressed: () async {
+                        await _auth.signOut();
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      text: 'Logout',
                       backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
                     ),
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 3,
@@ -479,6 +492,67 @@ class _ProfilePageState extends State<ProfilePage> {
             Navigator.pushReplacementNamed(context, '/profile');
           }
         },
+      ),
+    );
+  }
+
+  // Helper method for profile options
+  Widget _buildProfileOption(IconData icon, String title, VoidCallback onTap) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 5.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 2,
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        leading: Icon(icon, color: Colors.green),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  // Glowing button widget
+  Widget _buildGlowButton({
+    required VoidCallback onPressed,
+    required String text,
+    Color backgroundColor = Colors.green,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: backgroundColor,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 10,
+        shadowColor: Colors.green.withOpacity(0.5),
+      ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: backgroundColor.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 15,
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
