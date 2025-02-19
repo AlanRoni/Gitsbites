@@ -115,6 +115,40 @@ class _CartPageState extends State<CartPage> {
     return total;
   }
 
+  void navigateToPayment() {
+    if (cartItems.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentPage(
+            totalAmount: calculateTotalPrice().round(),
+            cartItems: cartItems
+                .map((item) => {
+                      'name': item['Item_Name'],
+                      'price': item['Price'],
+                      'quantity': item['quantity'],
+                    })
+                .toList(),
+            userName: FirebaseAuth.instance.currentUser?.displayName ?? 'Guest',
+            userEmail: FirebaseAuth.instance.currentUser?.email ?? 'No Email',
+          ),
+        ),
+      ).then((result) {
+        // Refresh cart if payment was successful
+        if (result == true) {
+          setState(() {
+            cartItems.clear();
+            totalPrice = 0.0;
+          });
+        }
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your cart is empty!')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,6 +220,16 @@ class _CartPageState extends State<CartPage> {
               ),
               Container(
                 padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
                 child: Column(
                   children: [
                     Row(
@@ -198,6 +242,28 @@ class _CartPageState extends State<CartPage> {
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: navigateToPayment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Pay Rs. ${calculateTotalPrice().toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
