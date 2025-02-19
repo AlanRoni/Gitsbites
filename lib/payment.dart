@@ -30,8 +30,18 @@ class _PaymentPageState extends State<PaymentPage> {
   bool isHoveredCOD = false;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  double calculateTotalAmount() {
+    double total = 0;
+    for (var item in widget.cartItems) {
+      total += (item['price'] as num) * (item['quantity'] as num);
+    }
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final actualTotal = calculateTotalAmount(); // Calculate the actual total
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -76,7 +86,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                     const SizedBox(height: 10.0),
                     Text(
-                      'Rs. ${widget.totalAmount}',
+                      'Rs. ${actualTotal.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 32.0,
                         fontWeight: FontWeight.bold,
@@ -321,6 +331,15 @@ class _PaymentPageState extends State<PaymentPage> {
         'status': 'pending',
         'transactionId': '#${orderNumber.substring(orderNumber.length - 6)}',
       });
+
+      // Return true on successful order save
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
     } catch (e) {
       print('Error saving order: $e');
       if (mounted) {

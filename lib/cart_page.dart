@@ -36,7 +36,23 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  void _proceedToPayment(List<Map<String, dynamic>> cartItems) {
+  Future<void> _clearCart() async {
+    final cartRef = FirebaseFirestore.instance
+        .collection('trial database')
+        .doc(currentUser?.uid)
+        .collection('cart');
+
+    final cartItems = await cartRef.get();
+
+    // Delete all items in cart using batch
+    final batch = FirebaseFirestore.instance.batch();
+    for (var doc in cartItems.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  void _proceedToPayment(List<Map<String, dynamic>> cartItems) async {
     if (totalAmount > 0) {
       // Convert the cart items to the format expected by PaymentPage
       List<Map<String, dynamic>> formattedItems = cartItems
@@ -48,17 +64,23 @@ class _CartPageState extends State<CartPage> {
               })
           .toList();
 
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PaymentPage(
-            totalAmount: totalAmount.round(),
+            totalAmount:
+                (totalAmount / 2).round(), // Fix the double counting issue
             cartItems: formattedItems,
             userName: currentUser?.displayName ?? 'Guest',
             userEmail: currentUser?.email ?? 'No Email',
           ),
         ),
       );
+
+      // If payment was successful (PaymentPage returns true)
+      if (result == true) {
+        await _clearCart(); // Clear the cart after successful payment
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your cart is empty!')),
