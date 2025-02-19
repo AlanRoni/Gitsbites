@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:table_calendar/table_calendar.dart';
-// Pages
 import 'package:gitsbites/breakfast.dart';
 import 'package:gitsbites/lunch.dart';
 import 'package:gitsbites/cart_page.dart';
@@ -11,16 +7,18 @@ import 'package:gitsbites/favorites_page.dart';
 import 'package:gitsbites/bottom_nav.dart';
 import 'package:gitsbites/payment.dart';
 import 'package:gitsbites/preorder1.dart';
-import 'package:gitsbites/login.dart';
-import 'package:gitsbites/admin.dart';
-import 'package:gitsbites/admin_pending_orders.dart';
-import 'package:gitsbites/admin_menu.dart';
+import 'package:gitsbites/admin_menu.dart'; // Import admin_menu.dart
+import 'package:table_calendar/table_calendar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'login.dart';
+import 'admin.dart';
+import 'admin_pending_orders.dart'; // Import admin_pending_orders.dart
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
+    options: FirebaseOptions(
       apiKey: 'AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0',
       authDomain: 'gitsbites.firebaseapp.com',
       projectId: 'gitsbites',
@@ -40,39 +38,29 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GitsBites',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-        '/favorites': (context) => const FavoritesPage(),
-        '/cart': (context) => const CartPage(),
-        '/profile': (context) => const ProfilePage(),
-        '/payment': (context) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null) {
-            return PaymentPage(
-              totalAmount: 0,
-              cartItems: [],
-              userName: user.displayName ?? 'Guest',
-              userEmail: user.email ?? 'No Email',
-            );
-          } else {
-            return const LoginPage();
-          }
-        },
-        '/preorder': (context) => const PreOrderPage(),
-        '/breakfast': (context) => const BreakfastPage(),
-        '/lunch': (context) => const LunchPage(),
-        '/admin': (context) => const AdminPage(),
-        '/admin_pending_orders': (context) => const AdminPendingOrdersPage(),
-        '/admin_menu': (context) => const AdminMenuPage(),
-      },
-    );
+        title: 'Kiosk App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+        ),
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginPage(),
+          '/home': (context) => const HomePage(),
+          '/favorites': (context) => const FavoritesPage(),
+          '/cart': (context) => const CartPage(),
+          '/profile': (context) => const ProfilePage(),
+          '/payment': (context) =>
+              const PaymentPage(totalAmount: 0, cartItems: []),
+          '/preorder': (context) => const PreOrderPage(),
+          '/breakfast': (context) => const BreakfastPage(),
+          '/lunch': (context) => const LunchPage(),
+          '/admin': (context) => const AdminPage(), // Added Admin route
+          '/admin_pending_orders': (context) =>
+              const AdminPendingOrdersPage(), // Added Admin Pending Orders route
+          '/admin_menu': (context) =>
+              const AdminMenuPage(), // Added Admin Menu route
+        });
   }
 }
 
@@ -123,10 +111,9 @@ class HomePage extends StatelessWidget {
                   color: Colors.green,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                leftChevronIcon:
-                    const Icon(Icons.chevron_left, color: Colors.white),
+                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
                 rightChevronIcon:
-                    const Icon(Icons.chevron_right, color: Colors.white),
+                    Icon(Icons.chevron_right, color: Colors.white),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
                 weekdayStyle: TextStyle(color: Colors.green.shade700),
@@ -153,15 +140,15 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
             Icon(
               Icons.home, // Using the home icon for the logo
               size: 24, // Adjust the size of the logo
               color: Colors.white,
             ),
-            SizedBox(width: 8), // Space between the logo and title
-            Text('Home', style: TextStyle(color: Colors.white)),
+            const SizedBox(width: 8), // Space between the logo and title
+            const Text('Home', style: TextStyle(color: Colors.white)),
           ],
         ),
         backgroundColor: Colors.green,
@@ -259,6 +246,8 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 20), // Spacing between buttons
+                // Login Button
               ],
             ),
           ),

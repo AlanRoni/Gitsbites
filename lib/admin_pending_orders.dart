@@ -1,166 +1,145 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
-class AdminPendingOrdersPage extends StatefulWidget {
+class AdminPendingOrdersPage extends StatelessWidget {
   const AdminPendingOrdersPage({super.key});
-
-  @override
-  State<AdminPendingOrdersPage> createState() => _AdminPendingOrdersPageState();
-}
-
-class _AdminPendingOrdersPageState extends State<AdminPendingOrdersPage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Pending Orders', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.green,
+        title: const Text('Pending Orders'),
+        backgroundColor: Colors.orange,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('orders')
-            .where('status', isEqualTo: 'pending')
-            .orderBy('orderDate', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            print('Error: ${snapshot.error}');
-            return Center(
-              child: Text(
-                'Error loading orders: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Colors.orange.shade100],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('Orders')
+              .where('status',
+                  isEqualTo: 'pending') // Fetch only pending orders
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-              ),
-            );
-          }
+            if (snapshot.hasError) {
+              return const Center(child: Text('Error loading pending orders.'));
+            }
 
-          final orders = snapshot.data?.docs ?? [];
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Center(child: Text('No pending orders available.'));
+            }
 
-          if (orders.isEmpty) {
-            return const Center(
-              child: Text(
-                'No pending orders',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            );
-          }
+            var orders = snapshot.data!.docs;
 
-          return ListView.builder(
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              try {
-                final order = orders[index].data() as Map<String, dynamic>;
-                final orderId = orders[index].id;
-                final items =
-                    List<Map<String, dynamic>>.from(order['items'] ?? []);
-                final orderDate = (order['orderDate'] as Timestamp).toDate();
+            return ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                var order = orders[index];
+                var orderId = order.id;
+                var items = order.get('items') as List<dynamic>;
+                var totalAmount = order.get('totalAmount') ?? 0.0;
+                var status = order.get('status') ?? 'pending';
 
                 return Card(
-                  margin: const EdgeInsets.all(8),
-                  elevation: 4,
-                  child: ExpansionTile(
-                    title: Text('Order #${order['orderNumber'] ?? orderId}'),
-                    subtitle: Column(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  elevation: 6,
+                  shadowColor: Colors.orange.shade200,
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Customer: ${order['userName'] ?? 'Unknown'}'),
                         Text(
-                            'Date: ${DateFormat('dd/MM/yyyy HH:mm').format(orderDate)}'),
-                        Text('Total: Rs. ${order['totalAmount'] ?? 0}'),
+                          'Order ID: $orderId',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Items:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        ...items.map((item) {
+                          return Text(
+                            '- ${item['name']} x${item['quantity']} (Rs ${item['price']})',
+                            style: const TextStyle(fontSize: 14),
+                          );
+                        }).toList(),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Total Amount: Rs $totalAmount',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Status: $status',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color:
+                                status == 'pending' ? Colors.red : Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            _updateOrderStatus(context, orderId);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          child: const Text('Mark as Completed'),
+                        ),
                       ],
                     ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Items:',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            ...items.map((item) => ListTile(
-                                  title: Text(
-                                      '${item['name']} x${item['quantity']}'),
-                                  trailing: Text(
-                                      'Rs. ${item['price'] * item['quantity']}'),
-                                )),
-                            const Divider(),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () => _completeOrder(orderId),
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green),
-                                  child: const Text('Complete Order'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () => _cancelOrder(orderId),
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red),
-                                  child: const Text('Cancel Order'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
                 );
-              } catch (e) {
-                print('Error rendering order: $e');
-                return const SizedBox.shrink();
-              }
-            },
-          );
-        },
+              },
+            );
+          },
+        ),
       ),
     );
   }
 
-  Future<void> _completeOrder(String orderId) async {
+  void _updateOrderStatus(BuildContext context, String orderId) async {
     try {
-      await _firestore.collection('orders').doc(orderId).update({
-        'status': 'completed',
-        'completedAt': FieldValue.serverTimestamp(),
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order completed successfully')),
-      );
-    } catch (e) {
-      print('Error completing order: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
-  }
+      await FirebaseFirestore.instance
+          .collection('Orders')
+          .doc(orderId)
+          .update({'status': 'completed'});
 
-  Future<void> _cancelOrder(String orderId) async {
-    try {
-      await _firestore.collection('orders').doc(orderId).update({
-        'status': 'cancelled',
-        'cancelledAt': FieldValue.serverTimestamp(),
-      });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order cancelled successfully')),
+        const SnackBar(content: Text('Order marked as completed.')),
       );
     } catch (e) {
-      print('Error cancelling order: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        const SnackBar(content: Text('Failed to update order status.')),
       );
     }
   }

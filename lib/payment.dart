@@ -4,20 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:universal_html/html.dart' as html;
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PaymentPage extends StatefulWidget {
   final int totalAmount;
   final List<Map<String, dynamic>> cartItems;
-  final String userName;
-  final String userEmail;
 
   const PaymentPage({
     super.key,
     required this.totalAmount,
     required this.cartItems,
-    required this.userName,
-    required this.userEmail,
   });
 
   @override
@@ -25,23 +20,11 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  String? selectedPaymentMethod;
-  bool isHoveredGooglePay = false;
-  bool isHoveredCOD = false;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  double calculateTotalAmount() {
-    double total = 0;
-    for (var item in widget.cartItems) {
-      total += (item['price'] as num) * (item['quantity'] as num);
-    }
-    return total;
-  }
+  bool _googlePaySelected = false;
+  bool _cashOnDeliverySelected = false;
 
   @override
   Widget build(BuildContext context) {
-    final actualTotal = calculateTotalAmount(); // Calculate the actual total
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -86,7 +69,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                     const SizedBox(height: 10.0),
                     Text(
-                      'Rs. ${actualTotal.toStringAsFixed(2)}',
+                      'Rs. ${widget.totalAmount}',
                       style: TextStyle(
                         fontSize: 32.0,
                         fontWeight: FontWeight.bold,
@@ -137,49 +120,35 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
               const SizedBox(height: 15.0),
 
-              // **Payment Methods**
+              // **Payment Methods with Checkboxes**
               Column(
                 children: [
-                  _buildPaymentMethod(
+                  _buildPaymentMethodCheckbox(
                     icon: Icons.account_balance_wallet,
-                    title: "UPI Payment",
-                    subtitle: "Pay securely via UPI",
+                    title: "Google Pay",
+                    subtitle: "Pay securely via Google Pay",
                     color: Colors.blue.shade600,
-                    onTap: () {
+                    value: _googlePaySelected,
+                    onChanged: (bool? value) {
                       setState(() {
-                        selectedPaymentMethod = 'Google Pay';
+                        _googlePaySelected = value!;
+                        if (value) _cashOnDeliverySelected = false;
                       });
                     },
-                    isDisabled: selectedPaymentMethod != null &&
-                        selectedPaymentMethod != 'Google Pay',
-                    isHovered: isHoveredGooglePay,
-                    onHover: (isHovered) {
-                      setState(() {
-                        isHoveredGooglePay = isHovered;
-                      });
-                    },
-                    isSelected: selectedPaymentMethod == 'Google Pay',
                   ),
                   const SizedBox(height: 12.0),
-                  _buildPaymentMethod(
+                  _buildPaymentMethodCheckbox(
                     icon: Icons.money,
-                    title: "Cash Payment",
-                    subtitle: "Pay with cash",
+                    title: "Cash on Delivery",
+                    subtitle: "Pay with cash upon delivery",
                     color: Colors.green.shade700,
-                    onTap: () {
+                    value: _cashOnDeliverySelected,
+                    onChanged: (bool? value) {
                       setState(() {
-                        selectedPaymentMethod = 'Cash on Delivery';
+                        _cashOnDeliverySelected = value!;
+                        if (value) _googlePaySelected = false;
                       });
                     },
-                    isDisabled: selectedPaymentMethod != null &&
-                        selectedPaymentMethod != 'Cash on Delivery',
-                    isHovered: isHoveredCOD,
-                    onHover: (isHovered) {
-                      setState(() {
-                        isHoveredCOD = isHovered;
-                      });
-                    },
-                    isSelected: selectedPaymentMethod == 'Cash on Delivery',
                   ),
                 ],
               ),
@@ -188,87 +157,14 @@ class _PaymentPageState extends State<PaymentPage> {
 
               // **Confirm Payment Button**
               GestureDetector(
-                onTap: () async {
-                  if (selectedPaymentMethod != null) {
-                    // Generate the receipt and save order
-                    await _generateReceipt(
-                        widget.totalAmount, widget.cartItems);
-                    await _saveOrderToFirestore(
-                        widget.totalAmount, widget.cartItems);
-
-                    if (mounted) {
-                      // Show confirmation popup
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            title: const Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 50,
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  'Order Confirmed!',
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            content: const Text(
-                              'Your order has been placed successfully.',
-                              textAlign: TextAlign.center,
-                            ),
-                            actions: [
-                              Center(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pushNamedAndRemoveUntil(
-                                      context,
-                                      '/home',
-                                      (route) => false,
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 40,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'OK',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                onTap: () {
+                  if (_googlePaySelected || _cashOnDeliverySelected) {
+                    print('Payment Confirmed with: ${_googlePaySelected ? 'Google Pay' : 'Cash on Delivery'}');
+                    if (_cashOnDeliverySelected) {
+                      _generateReceipt(widget.totalAmount, widget.cartItems);
                     }
                   } else {
-                    // Show error message if no payment method is selected
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Please select a payment method')),
-                    );
+                    print('Please select a payment method');
                   }
                 },
                 child: Container(
@@ -308,133 +204,65 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Future<void> _saveOrderToFirestore(
-      int totalAmount, List<Map<String, dynamic>> cartItems) async {
-    try {
-      final orderNumber = DateTime.now().millisecondsSinceEpoch.toString();
-
-      // Create new order document in Firestore
-      await _firestore.collection('orders').add({
-        'orderNumber': orderNumber,
-        'userName': widget.userName,
-        'userEmail': widget.userEmail,
-        'totalAmount': totalAmount,
-        'paymentMethod': selectedPaymentMethod,
-        'orderDate': DateTime.now(),
-        'items': cartItems
-            .map((item) => {
-                  'name': item['name'],
-                  'price': item['price'],
-                  'quantity': item['quantity'],
-                })
-            .toList(),
-        'status': 'pending',
-        'transactionId': '#${orderNumber.substring(orderNumber.length - 6)}',
-      });
-
-      // Return true on successful order save
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/home',
-        (route) => false,
-      );
-    } catch (e) {
-      print('Error saving order: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error placing order: $e')),
-        );
-      }
-    }
-  }
-
-  // **Reusable Payment Method Card**
-  Widget _buildPaymentMethod({
+  // **Reusable Payment Method Checkbox**
+  Widget _buildPaymentMethodCheckbox({
     required IconData icon,
     required String title,
     required String subtitle,
     required Color color,
-    required VoidCallback onTap,
-    required bool isDisabled,
-    required bool isHovered,
-    required Function(bool) onHover,
-    required bool isSelected,
+    required bool value,
+    required Function(bool?) onChanged,
   }) {
-    return MouseRegion(
-      onEnter: (_) => onHover(true),
-      onExit: (_) => onHover(false),
-      child: GestureDetector(
-        onTap: isDisabled ? null : onTap,
-        child: AbsorbPointer(
-          absorbing: isDisabled,
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-            decoration: BoxDecoration(
-              color:
-                  isHovered || isSelected ? Colors.grey.shade100 : Colors.white,
-              borderRadius: BorderRadius.circular(12.0),
-              boxShadow: [
-                if (isSelected)
-                  BoxShadow(
-                    color: color.withOpacity(0.6),
-                    blurRadius: 10.0,
-                    offset: const Offset(0, 4),
-                  )
-                else
-                  BoxShadow(
-                    color: Colors.black12.withOpacity(0.1),
-                    blurRadius: 6.0,
-                    offset: const Offset(0, 3),
-                  ),
-              ],
-              border: isHovered || isSelected
-                  ? Border.all(color: color, width: 2.0)
-                  : null,
+    return GestureDetector(
+      onTap: () {
+        onChanged(!value);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12.withOpacity(0.1),
+              blurRadius: 6.0,
+              offset: const Offset(0, 3),
             ),
-            child: Row(
+          ],
+        ),
+        child: Row(
+          children: [
+            Checkbox(
+              value: value,
+              onChanged: onChanged,
+              activeColor: color,
+            ),
+            const SizedBox(width: 15.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: color.withOpacity(0.2),
-                  radius: 22,
-                  child: Icon(icon, color: color, size: 24),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
                 ),
-                const SizedBox(width: 15.0),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4.0),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 13.0, color: Colors.black54),
                 ),
-                const Spacer(),
-                if (isSelected)
-                  Icon(Icons.check_circle, color: color, size: 24),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
   // **Generate Receipt PDF**
-  // **Generate Professional Receipt PDF**
   Future<void> _generateReceipt(
       int amount, List<Map<String, dynamic>> cartItems) async {
     final pdf = pw.Document();
@@ -469,7 +297,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     borderRadius: pw.BorderRadius.circular(8),
                     color: PdfColors.green,
                   ),
-                  child: pw.Text("To be Paid at Counter",
+                  child: pw.Text("To be Paid at Delivery",
                       style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: 14,
@@ -519,7 +347,7 @@ class _PaymentPageState extends State<PaymentPage> {
               border: pw.TableBorder.all(color: PdfColors.grey300),
               headerStyle: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.green),
+              headerDecoration: pw.BoxDecoration(color: PdfColors.green),
               cellHeight: 30,
               cellAlignments: {
                 0: pw.Alignment.centerLeft,
@@ -591,7 +419,7 @@ class _PaymentPageState extends State<PaymentPage> {
               style:
                   pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
           pw.SizedBox(width: 8),
-          pw.Text(value, style: const pw.TextStyle(fontSize: 14)),
+          pw.Text(value, style: pw.TextStyle(fontSize: 14)),
         ],
       ),
     );

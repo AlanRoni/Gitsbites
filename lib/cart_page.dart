@@ -12,80 +12,107 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  User? currentUser = FirebaseAuth.instance.currentUser;
-  double totalAmount = 0.0;
+  List<Map<String, dynamic>> cartItems = [];
+  double totalPrice = 0.0;
 
-  void _updateQuantity(
-      String docId, Map<String, dynamic> item, bool increase) async {
-    final cartRef = FirebaseFirestore.instance
-        .collection('trial database')
-        .doc(currentUser?.uid)
-        .collection('cart')
-        .doc(docId);
+  @override
+  void initState() {
+    super.initState();
+    fetchCartItems();
+  }
 
-    int currentQuantity = item['quantity'] ?? 1;
+  Future<void> fetchCartItems() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final cartRef = FirebaseFirestore.instance
+          .collection('trial database')
+          .doc(user.uid)
+          .collection('cart');
+      final snapshot = await cartRef.get();
 
-    if (!increase && currentQuantity <= 1) {
-      // Delete item if quantity would become 0
-      await cartRef.delete();
-    } else {
-      // Update quantity
-      await cartRef.update({
-        'quantity': increase ? currentQuantity + 1 : currentQuantity - 1,
+      List<Map<String, dynamic>> items = [];
+      double total = 0.0;
+      for (var doc in snapshot.docs) {
+        var data = doc.data();
+
+        // Ensuring null checks for each field
+        String itemName =
+            data['Item_Name'] ?? "Unnamed Item"; // fallback if null
+        String image = data['image'] ?? ""; // fallback if null
+        double price = data['Price']?.toDouble() ?? 0.0; // fallback if null
+        int quantity = data['quantity']?.toInt() ?? 1; // fallback if null
+
+        items.add(data);
+        total += price * quantity;
+      }
+      setState(() {
+        cartItems = items;
+        totalPrice = total;
       });
     }
   }
 
-  Future<void> _clearCart() async {
-    final cartRef = FirebaseFirestore.instance
-        .collection('trial database')
-        .doc(currentUser?.uid)
-        .collection('cart');
-
-    final cartItems = await cartRef.get();
-
-    // Delete all items in cart using batch
-    final batch = FirebaseFirestore.instance.batch();
-    for (var doc in cartItems.docs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
+  void increaseQuantity(int index) {
+    setState(() {
+      cartItems[index]['quantity']++;
+    });
+    updateCartItem(index);
   }
 
-  void _proceedToPayment(List<Map<String, dynamic>> cartItems) async {
-    if (totalAmount > 0) {
-      // Convert the cart items to the format expected by PaymentPage
-      List<Map<String, dynamic>> formattedItems = cartItems
-          .map((item) => {
-                'name': item['Item_Name'],
-                'price': item['Price'],
-                'quantity': item['quantity'],
-                'imageURL': item['imageURL'] ?? '',
-              })
-          .toList();
-
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentPage(
-            totalAmount:
-                (totalAmount / 2).round(), // Fix the double counting issue
-            cartItems: formattedItems,
-            userName: currentUser?.displayName ?? 'Guest',
-            userEmail: currentUser?.email ?? 'No Email',
-          ),
-        ),
-      );
-
-      // If payment was successful (PaymentPage returns true)
-      if (result == true) {
-        await _clearCart(); // Clear the cart after successful payment
+  void decreaseQuantity(int index) {
+    setState(() {
+      if (cartItems[index]['quantity'] > 1) {
+        cartItems[index]['quantity']--;
+      } else {
+        cartItems.removeAt(index);
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your cart is empty!')),
-      );
+    });
+    updateCartItem(index);
+  }
+
+  Future<void> updateCartItem(int index) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final cartRef = FirebaseFirestore.instance
+          .collection('trial database')
+          .doc(user.uid)
+          .collection('cart')
+          .doc(cartItems[index]['Item_Name']);
+
+      double quantity = cartItems[index]['quantity']?.toDouble() ?? 1.0;
+      await cartRef.update({'quantity': quantity});
     }
+  }
+
+  Future<void> clearCart() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final cartRef = FirebaseFirestore.instance
+          .collection('trial database')
+          .doc(user.uid)
+          .collection('cart');
+
+      final batch = FirebaseFirestore.instance.batch();
+      final snapshot = await cartRef.get();
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      setState(() {
+        cartItems.clear();
+        totalPrice = 0.0;
+      });
+    }
+  }
+
+  double calculateTotalPrice() {
+    double total = 0.0;
+    for (var item in cartItems) {
+      double price = item['Price']?.toDouble() ?? 0.0; // fallback if null
+      int quantity = item['quantity']?.toInt() ?? 1; // fallback if null
+      total += price * quantity;
+    }
+    return total;
   }
 
   @override
@@ -94,6 +121,12 @@ class _CartPageState extends State<CartPage> {
       appBar: AppBar(
         title: const Text('Cart', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.white),
+            onPressed: clearCart,
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -106,153 +139,70 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
           ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('trial database')
-                .doc(currentUser?.uid)
-                .collection('cart')
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text(
-                    "Your cart is empty!",
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                );
-              }
-
-              final cartItems = snapshot.data!.docs;
-              totalAmount = 0.0;
-
-              // Convert Firestore documents to List<Map>
-              final List<Map<String, dynamic>> cartItemsList =
-                  cartItems.map((doc) {
-                final item = doc.data() as Map<String, dynamic>;
-                final itemTotal =
-                    (item['Price'] ?? 0) * (item['quantity'] ?? 1);
-                totalAmount += itemTotal;
-                return {
-                  ...item,
-                  'id': doc.id, // Include document ID
-                };
-              }).toList();
-
-              return Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: cartItems.length,
-                      itemBuilder: (context, index) {
-                        final item =
-                            cartItems[index].data() as Map<String, dynamic>;
-                        final itemTotal =
-                            (item['Price'] ?? 0) * (item['quantity'] ?? 1);
-                        totalAmount += itemTotal;
-
-                        return Card(
-                          margin: const EdgeInsets.all(8),
-                          child: ListTile(
-                            leading: item['imageURL'] != null
-                                ? Image.network(
-                                    item['imageURL'],
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Icon(Icons.fastfood),
-                            title: Text(item['Item_Name'] ?? 'Unknown Item'),
-                            subtitle: Row(
-                              children: [
-                                Text('Price: ₹${item['Price']}'),
-                                const Spacer(),
-                                // Quantity Controls
-                                IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline),
-                                  color: Colors.red,
-                                  onPressed: () => _updateQuantity(
-                                      cartItems[index].id, item, false),
-                                ),
-                                Text(
-                                  '${item['quantity'] ?? 1}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.add_circle_outline),
-                                  color: Colors.green,
-                                  onPressed: () => _updateQuantity(
-                                      cartItems[index].id, item, true),
-                                ),
-                              ],
-                            ),
-                            trailing: Text(
-                              '₹${(item['Price'] ?? 0) * (item['quantity'] ?? 1)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, -4),
+          Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  children: [
+                    if (cartItems.isEmpty)
+                      const Center(
+                        child: Text(
+                          "Your cart is empty!",
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
                         ),
-                      ],
-                    ),
-                    child: Row(
+                      ),
+                    ...cartItems.map((item) {
+                      String itemName = item['Item_Name'] ?? "Unnamed Item";
+                      String image = item['image'] ?? "";
+                      double price = item['Price']?.toDouble() ?? 0.0;
+                      int quantity = item['quantity']?.toInt() ?? 1;
+                      return ListTile(
+                        leading: image.isNotEmpty
+                            ? Image.network(image, width: 60, height: 60)
+                            : const Icon(Icons.fastfood,
+                                size: 60, color: Colors.grey),
+                        title: Text(itemName),
+                        subtitle: Text('Price: Rs. $price'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () =>
+                                  decreaseQuantity(cartItems.indexOf(item)),
+                              icon: const Icon(Icons.remove, color: Colors.red),
+                            ),
+                            Text(quantity.toString()),
+                            IconButton(
+                              onPressed: () =>
+                                  increaseQuantity(cartItems.indexOf(item)),
+                              icon: const Icon(Icons.add, color: Colors.green),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Total: ₹${totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => _proceedToPayment(cartItemsList),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                          ),
-                          child: Text(
-                            'Pay ₹${totalAmount.toStringAsFixed(2)}',
+                        const Text('Total Amount:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Rs. ${calculateTotalPrice()}',
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                                fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -265,14 +215,5 @@ class _CartPageState extends State<CartPage> {
         },
       ),
     );
-  }
-
-  void _removeFromCart(String docId) async {
-    await FirebaseFirestore.instance
-        .collection('trial database')
-        .doc(currentUser?.uid)
-        .collection('cart')
-        .doc(docId)
-        .delete();
   }
 }
