@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:universal_html/html.dart' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PaymentPage extends StatefulWidget {
   final int totalAmount;
@@ -178,89 +179,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
               // **Confirm Payment Button**
               GestureDetector(
-                onTap: () async {
-                  if (selectedPaymentMethod != null) {
-                    // Generate the receipt and save order
-                    await _generateReceipt(
-                        widget.totalAmount, widget.cartItems);
-                    await _saveOrderToFirestore(
-                        widget.totalAmount, widget.cartItems);
-
-                    if (mounted) {
-                      // Show confirmation popup
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            title: const Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 50,
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  'Order Confirmed!',
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            content: const Text(
-                              'Your order has been placed successfully.',
-                              textAlign: TextAlign.center,
-                            ),
-                            actions: [
-                              Center(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pushNamedAndRemoveUntil(
-                                      context,
-                                      '/home',
-                                      (route) => false,
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 40,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'OK',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
-                  } else {
-                    // Show error message if no payment method is selected
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Please select a payment method')),
-                    );
-                  }
-                },
+                onTap: _handlePaymentConfirmation,
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.8,
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -298,29 +217,71 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Future<void> _saveOrderToFirestore(
-      int totalAmount, List<Map<String, dynamic>> cartItems) async {
+  Future<void> _clearCart() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final cartRef = FirebaseFirestore.instance
+            .collection('trial database')
+            .doc(user.uid)
+            .collection('cart');
+
+        final snapshot = await cartRef.get();
+        final batch = FirebaseFirestore.instance.batch();
+
+        for (var doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+
+        await batch.commit();
+
+        // Return true to indicate successful cart clear
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        print('Error clearing cart: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error clearing cart: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _saveOrderToFirestore() async {
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
       final orderNumber = DateTime.now().millisecondsSinceEpoch.toString();
 
-      // Create new order document in Firestore
+      // Create new order document
       await _firestore.collection('orders').add({
         'orderNumber': orderNumber,
+        'userId': user.uid,
         'userName': widget.userName,
         'userEmail': widget.userEmail,
-        'totalAmount': totalAmount,
+        'totalAmount': widget.totalAmount,
         'paymentMethod': selectedPaymentMethod,
         'orderDate': DateTime.now(),
-        'items': cartItems
-            .map((item) => {
-                  'name': item['name'],
-                  'price': item['price'],
-                  'quantity': item['quantity'],
-                })
-            .toList(),
+        'items': widget.cartItems,
         'status': 'pending',
         'transactionId': '#${orderNumber.substring(orderNumber.length - 6)}',
       });
+
+      // Clear cart and show success dialog
+      await _clearCart();
+
+      if (!mounted) return;
+
+      // Navigate home after success
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
     } catch (e) {
       print('Error saving order: $e');
       if (mounted) {
@@ -328,6 +289,94 @@ class _PaymentPageState extends State<PaymentPage> {
           SnackBar(content: Text('Error placing order: $e')),
         );
       }
+    }
+  }
+
+  void _handlePaymentConfirmation() async {
+    if (selectedPaymentMethod != null) {
+      try {
+        await _generateReceipt(widget.totalAmount, widget.cartItems);
+        await _saveOrderToFirestore();
+
+        if (mounted) {
+          // Show confirmation popup
+          showDialog(
+            context: context,
+            barrierDismissible: false, // Prevent dismissing by tapping outside
+            builder: (BuildContext context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                title: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 50,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Payment Successful!',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                content: const Text(
+                  'Your order has been placed successfully.',
+                  textAlign: TextAlign.center,
+                ),
+                actions: [
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Navigate to home and clear all routes
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/home',
+                          (route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error processing payment: $e')),
+          );
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a payment method')),
+      );
     }
   }
 
