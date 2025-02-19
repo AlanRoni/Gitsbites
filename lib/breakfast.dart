@@ -105,8 +105,6 @@ class _BreakfastPageState extends State<BreakfastPage> {
       appBar: AppBar(
         title:
             const Text('Breakfast Menu', style: TextStyle(color: Colors.white)),
-        title:
-            const Text('Breakfast Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -132,6 +130,8 @@ class _BreakfastPageState extends State<BreakfastPage> {
             padding: const EdgeInsets.only(bottom: 80),
             itemBuilder: (context, index) {
               final item = menuItems[index];
+              final itemData = item.data() as Map<String, dynamic>;
+
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 shape: RoundedRectangleBorder(
@@ -156,13 +156,13 @@ class _BreakfastPageState extends State<BreakfastPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item["name"],
+                              itemData["Item_Name"] ?? "Unknown Item",
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "INR ${item['price']}",
+                              "INR ${itemData['Price'] ?? 'N/A'}",
                               style: TextStyle(
                                   color: Colors.grey[600], fontSize: 14),
                             ),
@@ -189,11 +189,11 @@ class _BreakfastPageState extends State<BreakfastPage> {
                 ),
               );
             },
-          ),
-        ],
+          );
+        },
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0,
+        currentIndex: 3,
         onTap: (index) {
           final routes = ['/home', '/favorites', '/cart', '/profile'];
           Navigator.pushReplacementNamed(context, routes[index]);

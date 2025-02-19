@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'main.dart';
 
@@ -102,21 +102,25 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      // Sign in with Firebase Authentication
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: _passwordController.text.trim(),
+      User? user = await signInWithEmailPassword(
+        email,
+        _passwordController.text.trim(),
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login Successful!')),
-      );
+      if (user != null) {
+        // After successful login, create the user document in Firestore
+        await createUserDocument(user);
 
-      // Navigate to the Home Page after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login Successful!')),
+        );
+
+        // Navigate to the Home Page after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.message}')),
@@ -124,6 +128,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Google Sign-in method
   Future<void> _signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -138,7 +143,6 @@ class _LoginPageState extends State<LoginPage> {
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -149,9 +153,8 @@ class _LoginPageState extends State<LoginPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!'),
-        ),
+            content: Text(
+                'Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
       );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -210,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Log in to your account',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey.shade700, // Use .shade700 instead
+                        color: Colors.grey.shade700,
                       ),
                     ),
                   ],
@@ -325,7 +328,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: GestureDetector(
                   onTap: _signInWithGoogle, // Trigger Google Sign-In
                   child: RichText(
-                    text: const TextSpan(
+                    text: TextSpan(
                       text: "Don’t have an account? ",
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                       children: [

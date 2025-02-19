@@ -3,8 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'payment.dart';
 import 'bottom_nav.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -51,31 +49,6 @@ class _CartPageState extends State<CartPage> {
         cartItems = items;
         totalPrice = total;
       });
-    }
-
-    _getUserDetails();
-  }
-
-  // Function to get user details from Firestore based on UID
-  Future<void> _getUserDetails() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        if (userDoc.exists) {
-          setState(() {
-            final data = userDoc.data() as Map<String, dynamic>;
-            userName = data['name'] ?? 'Unknown';
-            userEmail = data['email'] ?? 'Unknown';
-          });
-        }
-      }
-    } catch (e) {
-      print("Error fetching user details: $e");
     }
   }
 

@@ -19,6 +19,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final _storage = FirebaseStorage.instance;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _reviewController = TextEditingController();
 
   bool _isEditing = false;
   bool _isLoading = false;
@@ -90,6 +91,32 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _profilePicFile = File(pickedFile.path);
       });
+    }
+  }
+
+  // Submit review to Firestore
+  Future<void> _submitReview() async {
+    final user = _auth.currentUser;
+    if (user != null && _reviewController.text.isNotEmpty) {
+      try {
+        await _firestore.collection('reviews').add({
+          'userId': user.uid,
+          'name': user.displayName ??
+              'Anonymous', // If name is null, use 'Anonymous'
+          'email': user.email ?? 'No email', // If email is null, use 'No email'
+          'review': _reviewController.text,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Review submitted successfully!')),
+        );
+        _reviewController.clear(); // Clear review text
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -185,16 +212,239 @@ class _ProfilePageState extends State<ProfilePage> {
                           const TextStyle(fontSize: 14, color: Colors.black54),
                     ),
                     const SizedBox(height: 20),
+// Profile options list with simplified order fetching (no email filter)
+                    _buildProfileOption(Icons.reorder, 'Orders', () async {
+                      try {
+                        // Fetching orders from Firestore without filtering by email
+                        QuerySnapshot orderSnapshot = await _firestore
+                            .collection('orders')
+                            .orderBy('orderDate',
+                                descending:
+                                    true) // Order by the date the order was placed
+                            .get();
 
-                    // Profile options list with glowing buttons
-                    _buildProfileOption(Icons.reorder, 'Orders', () {}),
-                    _buildProfileOption(Icons.comment, 'Reviews', () {}),
-                    _buildProfileOption(Icons.location_on, 'Address', () {}),
-                    _buildProfileOption(Icons.lock, 'Change Password', () {}),
-                    _buildProfileOption(Icons.info, 'About Us', () {}),
-                    _buildProfileOption(
-                        Icons.contact_mail, 'Contact Us', () {}),
-                    _buildProfileOption(Icons.language, 'Languages', () {}),
+                        if (orderSnapshot.docs.isNotEmpty) {
+                          // Show a list of orders
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Your Orders'),
+                              content: SizedBox(
+                                width: double.maxFinite,
+                                height: 300,
+                                child: ListView(
+                                  children: orderSnapshot.docs.map((orderDoc) {
+                                    var order =
+                                        orderDoc.data() as Map<String, dynamic>;
+                                    List items = order['items'] ??
+                                        []; // Safely access the items array
+                                    return ListTile(
+                                      title: Text(
+                                          'Order Number: ${order['orderNumber']}'),
+                                      subtitle: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Status: ${order['status']}'),
+                                          Text(
+                                              'Payment Method: ${order['paymentMethod']}'),
+                                          const SizedBox(height: 8),
+                                          // Displaying the items in the order
+                                          ...items.map((item) {
+                                            return Text(
+                                              '${item['name']} x${item['quantity']} - ₹${item['price']}',
+                                            );
+                                          }).toList(),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                              'Total: ₹${order['totalAmount']}'),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(); // Close the dialog
+                                  },
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          // No orders found
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No orders found!')),
+                          );
+                        }
+                      } catch (e) {
+                        // Error fetching orders
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    }),
+
+                    _buildProfileOption(Icons.comment, 'Reviews', () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Write a Review'),
+                            content: TextField(
+                              controller: _reviewController,
+                              decoration: const InputDecoration(
+                                hintText: 'Enter your review here',
+                              ),
+                              maxLines: 3,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  _submitReview();
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Submit'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
+                    _buildProfileOption(Icons.location_on, 'Address', () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Address'),
+                          content: const Text(
+                            'Kottukulam Hills, Pathamuttam P. O, Kerala 686532',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    _buildProfileOption(Icons.lock, 'Change Password',
+                        () async {
+                      final user = _auth.currentUser;
+                      if (user != null) {
+                        try {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          await _auth.sendPasswordResetEmail(
+                              email: user.email!);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Password reset email sent!')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: $e')),
+                          );
+                        } finally {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('No user is signed in!')),
+                        );
+                      }
+                    }),
+                    _buildProfileOption(Icons.info, 'About Us', () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('About Us'),
+                            content: const Text(
+                                'Welcome to Gits Bites, your ultimate food ordering companion! We’re here to bring you a seamless, delightful, and personalized food experience by offering a wide variety of cuisines from your favorite restaurants. Whether you re craving a quick snack or a hearty meal, our easy-to-use platform allows you to browse menus, place orders, and track deliveries in just a few taps. With secure payment options, personalized recommendations, and real-time order updates, Gits Bites ensures convenience and quality with every bite, let us satisfy your cravings with just a few taps, wherever you are'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
+                    _buildProfileOption(Icons.contact_mail, 'Contact Us', () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Contact Us'),
+                            content: const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Phone: +91 0481 243 6170'),
+                                SizedBox(height: 10),
+                                Text('Email: gitsbites@gmail.com'),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
+                    _buildProfileOption(Icons.language, 'Languages', () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Select a Language'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Text('English'),
+                                Text('Spanish'),
+                                Text('French'),
+                                Text('German'),
+                                Text('Chinese'),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
 
                     const SizedBox(height: 30),
 
