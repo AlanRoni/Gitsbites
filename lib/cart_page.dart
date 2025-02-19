@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'payment.dart';
-import 'bottom_nav.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'payment.dart';
+import 'bottom_nav.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -12,82 +12,65 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  List<Map<String, dynamic>> cartItems = [];
-  String userName = '';
-  String userEmail = '';
+  User? currentUser = FirebaseAuth.instance.currentUser;
+  double totalAmount = 0.0;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Retrieve the cart items passed as arguments
-    final List<Map<String, dynamic>>? newCartItems = ModalRoute.of(context)
-        ?.settings
-        .arguments as List<Map<String, dynamic>>?;
+  void _updateQuantity(
+      String docId, Map<String, dynamic> item, bool increase) async {
+    final cartRef = FirebaseFirestore.instance
+        .collection('trial database')
+        .doc(currentUser?.uid)
+        .collection('cart')
+        .doc(docId);
 
-    if (newCartItems != null) {
-      setState(() {
-        cartItems = newCartItems;
+    int currentQuantity = item['quantity'] ?? 1;
+
+    if (!increase && currentQuantity <= 1) {
+      // Delete item if quantity would become 0
+      await cartRef.delete();
+    } else {
+      // Update quantity
+      await cartRef.update({
+        'quantity': increase ? currentQuantity + 1 : currentQuantity - 1,
       });
     }
-
-    _getUserDetails();
   }
 
-  // Function to get user details from Firestore based on UID
-  Future<void> _getUserDetails() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+  void _proceedToPayment(List<Map<String, dynamic>> cartItems) {
+    if (totalAmount > 0) {
+      // Convert the cart items to the format expected by PaymentPage
+      List<Map<String, dynamic>> formattedItems = cartItems
+          .map((item) => {
+                'name': item['Item_Name'],
+                'price': item['Price'],
+                'quantity': item['quantity'],
+                'imageURL': item['imageURL'] ?? '',
+              })
+          .toList();
 
-        if (userDoc.exists) {
-          setState(() {
-            final data = userDoc.data() as Map<String, dynamic>;
-            userName = data['name'] ?? 'Unknown';
-            userEmail = data['email'] ?? 'Unknown';
-          });
-        }
-      }
-    } catch (e) {
-      print("Error fetching user details: $e");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentPage(
+            totalAmount: totalAmount.round(),
+            cartItems: formattedItems,
+            userName: currentUser?.displayName ?? 'Guest',
+            userEmail: currentUser?.email ?? 'No Email',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your cart is empty!')),
+      );
     }
-  }
-
-  int calculateTotalPrice() {
-    int total = 0;
-    for (var item in cartItems) {
-      total += (item['price'] as int) * (item['quantity'] as int);
-    }
-    return total;
-  }
-
-  void increaseQuantity(int index) {
-    setState(() {
-      cartItems[index]['quantity']++;
-    });
-  }
-
-  void decreaseQuantity(int index) {
-    setState(() {
-      if (cartItems[index]['quantity'] > 1) {
-        cartItems[index]['quantity']--;
-      } else {
-        cartItems.removeAt(index);
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Cart',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Cart', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
       body: Stack(
@@ -101,231 +84,153 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
           ),
-          Column(
-            children: [
-              Expanded(
-                child: cartItems.isEmpty
-                    ? const Center(
-                        child: Text(
-                          "Your cart is empty!",
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: cartItems.length,
-                        itemBuilder: (context, index) {
-                          final item = cartItems[index];
-                          return Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            padding: const EdgeInsets.all(12.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.asset(
-                                    item['image'],
-                                    width: 60,
-                                    height: 60,
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('trial database')
+                .doc(currentUser?.uid)
+                .collection('cart')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    "Your cart is empty!",
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                );
+              }
+
+              final cartItems = snapshot.data!.docs;
+              totalAmount = 0.0;
+
+              // Convert Firestore documents to List<Map>
+              final List<Map<String, dynamic>> cartItemsList =
+                  cartItems.map((doc) {
+                final item = doc.data() as Map<String, dynamic>;
+                final itemTotal =
+                    (item['Price'] ?? 0) * (item['quantity'] ?? 1);
+                totalAmount += itemTotal;
+                return {
+                  ...item,
+                  'id': doc.id, // Include document ID
+                };
+              }).toList();
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: cartItems.length,
+                      itemBuilder: (context, index) {
+                        final item =
+                            cartItems[index].data() as Map<String, dynamic>;
+                        final itemTotal =
+                            (item['Price'] ?? 0) * (item['quantity'] ?? 1);
+                        totalAmount += itemTotal;
+
+                        return Card(
+                          margin: const EdgeInsets.all(8),
+                          child: ListTile(
+                            leading: item['imageURL'] != null
+                                ? Image.network(
+                                    item['imageURL'],
+                                    width: 50,
+                                    height: 50,
                                     fit: BoxFit.cover,
-                                  ),
+                                  )
+                                : const Icon(Icons.fastfood),
+                            title: Text(item['Item_Name'] ?? 'Unknown Item'),
+                            subtitle: Row(
+                              children: [
+                                Text('Price: ₹${item['Price']}'),
+                                const Spacer(),
+                                // Quantity Controls
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  color: Colors.red,
+                                  onPressed: () => _updateQuantity(
+                                      cartItems[index].id, item, false),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['name'],
-                                        style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Price: Rs. ${item['price']}',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => decreaseQuantity(index),
-                                      icon: const Icon(Icons.remove,
-                                          color: Colors.red),
-                                    ),
-                                    Text(
-                                      item['quantity'].toString(),
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    IconButton(
-                                      onPressed: () => increaseQuantity(index),
-                                      icon: const Icon(Icons.add,
-                                          color: Colors.green),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Color(0xFFA8D5A3)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey,
-                      blurRadius: 8,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Amount:',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'Rs. ${calculateTotalPrice()}',
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: () {
-                        if (calculateTotalPrice() <= 0) {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                title: const Text(
-                                  'Empty Cart',
-                                  style: TextStyle(
-                                    color: Colors.green,
+                                Text(
+                                  '${item['quantity'] ?? 1}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                content: const Text(
-                                  'The cart is empty. Add items to proceed.',
-                                  style: TextStyle(fontSize: 16),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  color: Colors.green,
+                                  onPressed: () => _updateQuantity(
+                                      cartItems[index].id, item, true),
                                 ),
-                                actions: [
-                                  TextButton(
-                                    child: const Text(
-                                      'OK',
-                                      style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PaymentPage(
-                                totalAmount: calculateTotalPrice(),
-                                cartItems: List.from(cartItems),
-                                userName: userName,
-                                userEmail: userEmail,
-                              ),
+                              ],
                             ),
-                          );
-                        }
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF4CAF50), Color(0xFF087F23)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.payment, color: Colors.white),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Proceed to Payment - Rs. ${calculateTotalPrice()}',
+                            trailing: Text(
+                              '₹${(item['Price'] ?? 0) * (item['quantity'] ?? 1)}',
                               style: const TextStyle(
-                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius: 2,
-                                    color: Colors.black26,
-                                    offset: Offset(1, 1),
-                                  ),
-                                ],
+                                fontSize: 16,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total: ₹${totalAmount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => _proceedToPayment(cartItemsList),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: Text(
+                            'Pay ₹${totalAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -338,5 +243,14 @@ class _CartPageState extends State<CartPage> {
         },
       ),
     );
+  }
+
+  void _removeFromCart(String docId) async {
+    await FirebaseFirestore.instance
+        .collection('trial database')
+        .doc(currentUser?.uid)
+        .collection('cart')
+        .doc(docId)
+        .delete();
   }
 }
