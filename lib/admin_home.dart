@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'intro.dart'; // Add this line
 // Pages
 import 'package:gitsbites/breakfast.dart';
 import 'package:gitsbites/lunch.dart';
@@ -16,8 +15,155 @@ import 'package:gitsbites/login.dart';
 import 'package:gitsbites/admin.dart';
 import 'package:gitsbites/admin_pending_orders.dart';
 import 'package:gitsbites/admin_menu.dart';
-import 'admin_login.dart';
-import 'admin_home.dart'; // Add this import
+import 'package:flutter/material.dart';
+
+class AdminHomePage extends StatelessWidget {
+  const AdminHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Row(
+          children: [
+            Icon(
+              Icons.admin_panel_settings,
+              size: 24,
+              color: Color.fromARGB(255, 76, 175, 180),
+            ),
+            SizedBox(width: 8),
+            Text('Admin Home', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        backgroundColor: const Color.fromARGB(255, 24, 170, 56),
+      ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFA8D5A3)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Admin Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 81, 141, 231),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 5,
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context,
+                          '/admin'); // This button navigates to admin.dart
+                    },
+                    child: const Text(
+                      'ADMIN',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Breakfast Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/breakfast');
+                    },
+                    child: const Text(
+                      'BREAKFAST',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Lunch Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/lunch');
+                    },
+                    child: const Text(
+                      'LUNCH',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Pre-Order Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/preorder');
+                    },
+                    child: const Text(
+                      'PRE-ORDER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,9 +194,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: const IntroPage(), // Set IntroPage as the home screen
+      initialRoute: '/login',
       routes: {
-        '/intro': (context) => const IntroPage(),
         '/login': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         '/favorites': (context) => const FavoritesPage(),
@@ -75,8 +220,6 @@ class MyApp extends StatelessWidget {
         '/admin': (context) => const AdminPage(),
         '/admin_pending_orders': (context) => const AdminPendingOrdersPage(),
         '/admin_menu': (context) => const AdminMenuPage(),
-        '/admin_login': (context) => const AdminLoginPage(),
-        '/admin_home': (context) => const AdminHomePage(), // Add this route
       },
     );
   }
@@ -188,6 +331,33 @@ class HomePage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Admin Button
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade700,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 5,
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/admin');
+                    },
+                    child: const Text(
+                      'ADMIN',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // Breakfast Button
                 SizedBox(
                   width: 200, // Ensures both buttons have the same size
