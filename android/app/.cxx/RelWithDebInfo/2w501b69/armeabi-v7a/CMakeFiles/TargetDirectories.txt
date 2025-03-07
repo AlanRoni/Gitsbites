@@ -1,0 +1,2 @@
+C:/Users/Alan Roni/Desktop/gitsbites/gitsbites/android/app/.cxx/RelWithDebInfo/2w501b69/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Alan Roni/Desktop/gitsbites/gitsbites/android/app/.cxx/RelWithDebInfo/2w501b69/armeabi-v7a/CMakeFiles/rebuild_cache.dir
