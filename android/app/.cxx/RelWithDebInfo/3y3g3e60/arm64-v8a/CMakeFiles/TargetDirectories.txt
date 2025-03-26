@@ -1,0 +1,2 @@
+C:/Users/HP/Desktop/gitsbites/Gitsbites/android/app/.cxx/RelWithDebInfo/3y3g3e60/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/HP/Desktop/gitsbites/Gitsbites/android/app/.cxx/RelWithDebInfo/3y3g3e60/arm64-v8a/CMakeFiles/rebuild_cache.dir

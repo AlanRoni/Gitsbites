@@ -10,7 +10,8 @@ class AdminMenuPage extends StatefulWidget {
 
 class _AdminMenuPageState extends State<AdminMenuPage> {
   final List<Map<String, dynamic>> _editedItems = [];
-  String _selectedCategory = 'Menu_Breakfast'; // Moved to a state variable
+  final String _selectedCategory =
+      'Menu_Breakfast'; // Moved to a state variable
 
   @override
   Widget build(BuildContext context) {

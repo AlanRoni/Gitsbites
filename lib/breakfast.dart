@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:gitsbites/bottom_nav.dart';
+import 'bottom_nav.dart';
 
 class BreakfastPage extends StatefulWidget {
   const BreakfastPage({super.key});
@@ -11,90 +11,152 @@ class BreakfastPage extends StatefulWidget {
 }
 
 class _BreakfastPageState extends State<BreakfastPage> {
-  final List<Map<String, dynamic>> cartItems = [];
-  double totalPrice = 0.0;
-  User? currentUser = FirebaseAuth.instance.currentUser;
+  final List<Map<String, dynamic>> menuItems = [
+    {
+      "name": "Puttu ",
+      "price": 40,
+      "image": "assets/puttu.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Idli and Sambar(Nos:4)",
+      "price": 55,
+      "image": "assets/idli.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Chapati",
+      "price": 10,
+      "image": "assets/chapati.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Appam",
+      "price": 12,
+      "image": "assets/appam.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Porotta",
+      "price": 12,
+      "image": "assets/porotta.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Chicken Curry",
+      "price": 60,
+      "image": "assets/chickencurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Kadala Curry",
+      "price": 20,
+      "image": "assets/kadalacurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+    {
+      "name": "Egg Curry",
+      "price": 40,
+      "image": "eggcurry.png",
+      "isFavorite": false,
+      "inCart": false,
+      "quantity": 1,
+    },
+  ];
 
-  // Function to toggle favorite status and update Firestore
-  void toggleFavorite(Map<String, dynamic> item) async {
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in!')),
-      );
-      return;
-    }
+  final List<Map<String, dynamic>> favoriteItems = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-    final userFavoritesRef = FirebaseFirestore.instance
-        .collection('trial database')
-        .doc(currentUser!.uid)
-        .collection('favourites');
+  // Toggle favorite status for each item
+  void toggleFavorite(int index) {
+    final item = menuItems[index];
 
-    final querySnapshot = await userFavoritesRef
-        .where('Item_Name', isEqualTo: item['Item_Name'])
-        .limit(1)
-        .get();
-
-    if (querySnapshot.docs.isNotEmpty) {
-      await querySnapshot.docs.first.reference.delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${item['Item_Name']} removed from favorites!")),
-      );
-    } else {
-      await userFavoritesRef.add(item);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${item['Item_Name']} added to favorites!")),
-      );
-    }
-    setState(() {});
+    setState(() {
+      if (item['isFavorite']) {
+        // Remove from favorites if already in list
+        item['isFavorite'] = false;
+        favoriteItems.removeWhere((fav) => fav['name'] == item['name']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} removed from favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Add to favorites if not in list
+        item['isFavorite'] = true;
+        favoriteItems.add(item);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${item['name']} added to favorites!"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
   }
 
-  void addToCart(Map<String, dynamic> item) async {
-    if (currentUser == null) {
+  // Toggle cart status for each item
+  Future<void> toggleCart(int index) async {
+    final user = _auth.currentUser;
+    if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in!')),
+        const SnackBar(content: Text("Please login to add items to cart")),
       );
       return;
     }
 
-    final userCartRef = FirebaseFirestore.instance
+    final item = menuItems[index];
+    final cartRef = _firestore
         .collection('trial database')
-        .doc(currentUser!.uid)
-        .collection('cart');
+        .doc(user.uid)
+        .collection('cart')
+        .doc(item['name']);
 
     try {
-      final querySnapshot = await userCartRef
-          .where('Item_Name', isEqualTo: item['Item_Name'])
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
-        final currentQuantity = doc['quantity'] ?? 1;
-        await doc.reference.update({'quantity': currentQuantity + 1});
-      } else {
-        await userCartRef.add({
-          'Item_Name': item['Item_Name'],
-          'Price': item['Price'],
-          'quantity': 1,
-          'timestamp': FieldValue.serverTimestamp(),
+      if (item['inCart']) {
+        // Remove from cart
+        await cartRef.delete();
+        setState(() {
+          item['inCart'] = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${item['name']} removed from cart!")),
+        );
+      } else {
+        // Add to cart
+        await cartRef.set({
+          'Item_Name': item['name'],
+          'Price': item['price'],
+          'image': item['image'],
+          'quantity': item['quantity'],
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        setState(() {
+          item['inCart'] = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${item['name']} added to cart!")),
+        );
       }
-
-      totalPrice += item['Price'];
-      final userDocRef = FirebaseFirestore.instance
-          .collection('trial database')
-          .doc(currentUser!.uid);
-      await userDocRef
-          .set({'Total_Price': totalPrice}, SetOptions(merge: true));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${item['Item_Name']} added to cart!")),
-      );
-
-      setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error adding item to cart: $e')),
+        SnackBar(content: Text("Error: ${e.toString()}")),
       );
     }
   }
@@ -107,31 +169,22 @@ class _BreakfastPageState extends State<BreakfastPage> {
             const Text('Breakfast Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('Menu_Breakfast')
-            .where('Stock', isGreaterThan: 0)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No breakfast items available.'));
-          }
-
-          final menuItems = snapshot.data!.docs;
-
-          return ListView.builder(
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFA8D5A3)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          ListView.builder(
             itemCount: menuItems.length,
             padding: const EdgeInsets.only(bottom: 80),
             itemBuilder: (context, index) {
               final item = menuItems[index];
-              final itemData = item.data() as Map<String, dynamic>;
-
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 shape: RoundedRectangleBorder(
@@ -144,11 +197,12 @@ class _BreakfastPageState extends State<BreakfastPage> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: itemData.containsKey("imageURL")
-                            ? Image.network(itemData["imageURL"],
-                                width: 60, height: 60, fit: BoxFit.cover)
-                            : const Icon(Icons.fastfood,
-                                size: 60, color: Colors.grey),
+                        child: Image.asset(
+                          item["image"],
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -156,15 +210,19 @@ class _BreakfastPageState extends State<BreakfastPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              itemData["Item_Name"] ?? "Unknown Item",
+                              item["name"],
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "INR ${itemData['Price'] ?? 'N/A'}",
+                              "INR ${item['price']}",
                               style: TextStyle(
-                                  color: Colors.grey[600], fontSize: 14),
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
                             ),
                           ],
                         ),
@@ -172,15 +230,33 @@ class _BreakfastPageState extends State<BreakfastPage> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Favorite Button
                           IconButton(
-                            icon: const Icon(Icons.add_shopping_cart,
-                                color: Colors.grey),
-                            onPressed: () => addToCart(itemData),
+                            icon: Icon(
+                              item['isFavorite']
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: item['isFavorite']
+                                  ? const Color.fromARGB(255, 76, 175, 80)
+                                  : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleFavorite(
+                                  index); // Toggle favorite on button press
+                            },
                           ),
+                          // Cart Button
                           IconButton(
-                            icon: const Icon(Icons.favorite_border,
-                                color: Colors.grey),
-                            onPressed: () => toggleFavorite(itemData),
+                            icon: Icon(
+                              item['inCart']
+                                  ? Icons.shopping_cart
+                                  : Icons.add_shopping_cart,
+                              color:
+                                  item['inCart'] ? Colors.green : Colors.grey,
+                            ),
+                            onPressed: () {
+                              toggleCart(index); // Toggle cart on button press
+                            },
                           ),
                         ],
                       ),
@@ -189,14 +265,26 @@ class _BreakfastPageState extends State<BreakfastPage> {
                 ),
               );
             },
-          );
-        },
+          ),
+        ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 3,
+        currentIndex: 0,
         onTap: (index) {
-          final routes = ['/home', '/favorites', '/cart', '/profile'];
-          Navigator.pushReplacementNamed(context, routes[index]);
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(
+              context,
+              '/favorites',
+              arguments: favoriteItems,
+            );
+          } else if (index == 2) {
+            // Modified this part - no need to pass cartItems since CartPage will fetch from Firestore
+            Navigator.pushReplacementNamed(context, '/cart');
+          } else if (index == 3) {
+            Navigator.pushReplacementNamed(context, '/profile');
+          }
         },
       ),
     );

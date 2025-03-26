@@ -144,9 +144,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
         currentIndex: 1,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1)
+          if (index == 1) {
             Navigator.pushReplacementNamed(context, '/favorites',
                 arguments: favoriteItems);
+          }
           if (index == 2) Navigator.pushReplacementNamed(context, '/cart');
           if (index == 3) Navigator.pushReplacementNamed(context, '/profile');
         },

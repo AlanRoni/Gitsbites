@@ -15,7 +15,6 @@ import 'package:gitsbites/login.dart';
 import 'package:gitsbites/admin.dart';
 import 'package:gitsbites/admin_pending_orders.dart';
 import 'package:gitsbites/admin_menu.dart';
-import 'package:flutter/material.dart';
 
 class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
@@ -206,7 +205,7 @@ class MyApp extends StatelessWidget {
           if (user != null) {
             return PaymentPage(
               totalAmount: 0,
-              cartItems: [],
+              cartItems: const [],
               userName: user.displayName ?? 'Guest',
               userEmail: user.email ?? 'No Email',
             );

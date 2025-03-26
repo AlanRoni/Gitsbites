@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart' show ImagePicker, ImageSource;
+import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'bottom_nav.dart';
 
@@ -25,535 +25,721 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = false;
   File? _profilePicFile;
 
-  // Fetch the user data from Firebase Auth and Firestore
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
   Future<void> _fetchUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      _nameController.text = user.displayName ?? '';
-      _emailController.text = user.email ?? '';
-
-      DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(user.uid).get();
-      if (userDoc.exists && userDoc['profilePicUrl'] != null) {
-        setState(() {
-          _profilePicFile = null;
-        });
-      }
-    }
-  }
-
-  // Save the edited profile information to Firestore and update Auth details
-  Future<void> _saveProfile() async {
-    final user = _auth.currentUser;
-    if (user != null) {
       setState(() {
-        _isLoading = true;
+        _nameController.text = user.displayName ?? '';
+        _emailController.text = user.email ?? '';
       });
 
       try {
-        String? profilePicUrl;
-        if (_profilePicFile != null) {
-          final storageRef =
-              _storage.ref().child('profile_pics/${user.uid}.jpg');
-          final uploadTask = storageRef.putFile(_profilePicFile!);
-          final snapshot = await uploadTask;
-          profilePicUrl = await snapshot.ref.getDownloadURL();
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists && userDoc['profilePicUrl'] != null) {
+          setState(() {
+            _profilePicFile = null;
+          });
         }
-
-        await user.updateDisplayName(_nameController.text);
-
-        await _firestore.collection('users').doc(user.uid).set({
-          'name': _nameController.text,
-          'email': _emailController.text,
-          'profilePicUrl': profilePicUrl,
-        }, SetOptions(merge: true));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
-        );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        debugPrint('Error fetching user data: $e');
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
-  // Select a new profile picture from the gallery
+  Future<void> _saveProfile() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      String? profilePicUrl;
+      if (_profilePicFile != null) {
+        final storageRef = _storage.ref().child('profile_pics/${user.uid}.jpg');
+        final uploadTask = storageRef.putFile(_profilePicFile!);
+        final snapshot = await uploadTask;
+        profilePicUrl = await snapshot.ref.getDownloadURL();
+      }
+
+      await user.updateDisplayName(_nameController.text);
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'profilePicUrl': profilePicUrl,
+      }, SetOptions(merge: true));
+
+      _showSuccessSnackBar('Profile updated successfully!');
+    } catch (e) {
+      _showErrorSnackBar('Error updating profile: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _pickProfilePicture() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() {
-        _profilePicFile = File(pickedFile.path);
-      });
+      setState(() => _profilePicFile = File(pickedFile.path));
     }
   }
 
-  // Submit review to Firestore
   Future<void> _submitReview() async {
     final user = _auth.currentUser;
-    if (user != null && _reviewController.text.isNotEmpty) {
-      try {
-        await _firestore.collection('reviews').add({
-          'userId': user.uid,
-          'name': user.displayName ??
-              'Anonymous', // If name is null, use 'Anonymous'
-          'email': user.email ?? 'No email', // If email is null, use 'No email'
-          'review': _reviewController.text,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
+    if (user == null || _reviewController.text.isEmpty) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review submitted successfully!')),
-        );
-        _reviewController.clear(); // Clear review text
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
+    try {
+      await _firestore.collection('reviews').add({
+        'userId': user.uid,
+        'name': user.displayName ?? 'Anonymous',
+        'email': user.email ?? 'No email',
+        'review': _reviewController.text,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      _showSuccessSnackBar('Review submitted successfully!');
+      _reviewController.clear();
+    } catch (e) {
+      _showErrorSnackBar('Error submitting review: $e');
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserData(); // Fetch user data on page load
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Row(
-          children: [
-            Text(
-              'Profile',
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(width: 8),
-            Icon(
-              Icons.person_outline,
-              size: 24,
-              color: Colors.white,
-            ),
-          ],
+        title: const Text(
+          'My Profile',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
-        backgroundColor: Colors.green,
+        centerTitle: true,
+        backgroundColor: Colors.green[800],
         elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(15),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {},
+            color: Colors.white,
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Background Gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.white, Color(0xFFA8D5A3)], // Gradient colors
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Profile Header Section
+              _buildProfileHeader(),
+              const SizedBox(height: 30),
+
+              // Account Section
+              _buildSectionHeader('Account'),
+              _buildProfileOption(
+                icon: Icons.receipt_long_outlined,
+                title: 'My Orders',
+                onTap: _showOrderHistory,
               ),
-            ),
-            // Profile Content
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Profile Picture and Name
-                    GestureDetector(
-                      onTap: _pickProfilePicture,
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundImage: _profilePicFile != null
-                            ? FileImage(_profilePicFile!)
-                            : const AssetImage('assets/profile_pic.png')
-                                as ImageProvider,
-                        backgroundColor: Colors.grey[200],
-                        child: _profilePicFile == null
-                            ? const Icon(Icons.camera_alt, color: Colors.white)
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _isEditing
-                        ? TextField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(
-                              hintText: 'Enter your name',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                  vertical: 12.0, horizontal: 16.0),
-                            ),
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
-                          )
-                        : Text(
-                            _nameController.text.isEmpty
-                                ? 'Your Name'
-                                : _nameController.text,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                    const SizedBox(height: 5),
-                    Text(
-                      _emailController.text,
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 20),
-// Profile options list with simplified order fetching (no email filter)
-                    _buildProfileOption(Icons.reorder, 'Orders', () async {
-                      try {
-                        // Fetching orders from Firestore without filtering by email
-                        QuerySnapshot orderSnapshot = await _firestore
-                            .collection('orders')
-                            .orderBy('orderDate',
-                                descending:
-                                    true) // Order by the date the order was placed
-                            .get();
-
-                        if (orderSnapshot.docs.isNotEmpty) {
-                          // Show a list of orders
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Your Orders'),
-                              content: SizedBox(
-                                width: double.maxFinite,
-                                height: 300,
-                                child: ListView(
-                                  children: orderSnapshot.docs.map((orderDoc) {
-                                    var order =
-                                        orderDoc.data() as Map<String, dynamic>;
-                                    List items = order['items'] ??
-                                        []; // Safely access the items array
-                                    return ListTile(
-                                      title: Text(
-                                          'Order Number: ${order['orderNumber']}'),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text('Status: ${order['status']}'),
-                                          Text(
-                                              'Payment Method: ${order['paymentMethod']}'),
-                                          const SizedBox(height: 8),
-                                          // Displaying the items in the order
-                                          ...items.map((item) {
-                                            return Text(
-                                              '${item['name']} x${item['quantity']} - ₹${item['price']}',
-                                            );
-                                          }).toList(),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                              'Total: ₹${order['totalAmount']}'),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .pop(); // Close the dialog
-                                  },
-                                  child: const Text('Close'),
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          // No orders found
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No orders found!')),
-                          );
-                        }
-                      } catch (e) {
-                        // Error fetching orders
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
-                      }
-                    }),
-
-                    _buildProfileOption(Icons.comment, 'Reviews', () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Write a Review'),
-                            content: TextField(
-                              controller: _reviewController,
-                              decoration: const InputDecoration(
-                                hintText: 'Enter your review here',
-                              ),
-                              maxLines: 3,
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  _submitReview();
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Submit'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }),
-                    _buildProfileOption(Icons.location_on, 'Address', () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Address'),
-                          content: const Text(
-                            'Kottukulam Hills, Pathamuttam P. O, Kerala 686532',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(); // Close the dialog
-                              },
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    _buildProfileOption(Icons.lock, 'Change Password',
-                        () async {
-                      final user = _auth.currentUser;
-                      if (user != null) {
-                        try {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          await _auth.sendPasswordResetEmail(
-                              email: user.email!);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Password reset email sent!')),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
-                          );
-                        } finally {
-                          setState(() {
-                            _isLoading = false;
-                          });
-                        }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('No user is signed in!')),
-                        );
-                      }
-                    }),
-                    _buildProfileOption(Icons.info, 'About Us', () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('About Us'),
-                            content: const Text(
-                                'Welcome to Gits Bites, your ultimate food ordering companion! We’re here to bring you a seamless, delightful, and personalized food experience by offering a wide variety of cuisines from your favorite restaurants. Whether you re craving a quick snack or a hearty meal, our easy-to-use platform allows you to browse menus, place orders, and track deliveries in just a few taps. With secure payment options, personalized recommendations, and real-time order updates, Gits Bites ensures convenience and quality with every bite, let us satisfy your cravings with just a few taps, wherever you are'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Close'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }),
-                    _buildProfileOption(Icons.contact_mail, 'Contact Us', () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Contact Us'),
-                            content: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Phone: +91 0481 243 6170'),
-                                SizedBox(height: 10),
-                                Text('Email: gitsbites@gmail.com'),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Close'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }),
-                    _buildProfileOption(Icons.language, 'Languages', () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Select a Language'),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text('English'),
-                                Text('Spanish'),
-                                Text('French'),
-                                Text('German'),
-                                Text('Chinese'),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Close'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }),
-
-                    const SizedBox(height: 30),
-
-                    // Edit Button with glowing effect
-                    _buildGlowButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_isEditing) {
-                            _saveProfile();
-                          }
-                          _isEditing = !_isEditing; // Toggle editing mode
-                        });
-                      },
-                      text: _isEditing ? 'Save Changes' : 'Edit Profile',
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Logout Button with glowing effect
-                    _buildGlowButton(
-                      onPressed: () async {
-                        await _auth.signOut();
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      text: 'Logout',
-                      backgroundColor: Colors.red,
-                    ),
-                  ],
-                ),
+              _buildProfileOption(
+                icon: Icons.favorite_border,
+                title: 'Favorites',
+                onTap: () {},
               ),
-            ),
-          ],
+              _buildProfileOption(
+                icon: Icons.location_on_outlined,
+                title: 'Saved Addresses',
+                onTap: _showAddressDialog,
+              ),
+              _buildProfileOption(
+                icon: Icons.payment_outlined,
+                title: 'Payment Methods',
+                onTap: () {},
+              ),
+
+              // App Section
+              _buildSectionHeader('App'),
+              _buildProfileOption(
+                icon: Icons.notifications_outlined,
+                title: 'Notifications',
+                onTap: () {},
+              ),
+              _buildProfileOption(
+                icon: Icons.help_outline,
+                title: 'Help & Support',
+                onTap: _showHelpDialog,
+              ),
+              _buildProfileOption(
+                icon: Icons.info_outline,
+                title: 'About Us',
+                onTap: _showAboutDialog,
+              ),
+              _buildProfileOption(
+                icon: Icons.star_outline,
+                title: 'Rate Us',
+                onTap: () {},
+              ),
+
+              // Action Buttons
+              const SizedBox(height: 30),
+              _buildActionButton(
+                text: _isEditing ? 'SAVE CHANGES' : 'EDIT PROFILE',
+                onPressed: _toggleEditMode,
+                icon: Icons.edit_outlined,
+              ),
+              const SizedBox(height: 15),
+              _buildActionButton(
+                text: 'LOGOUT',
+                onPressed: _logout,
+                icon: Icons.logout,
+                backgroundColor: Colors.red[400],
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 3,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/favorites');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/cart');
-          } else if (index == 3) {
-            Navigator.pushReplacementNamed(context, '/profile');
-          }
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/favorites');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/cart');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/profile');
         },
       ),
     );
   }
 
-  // Helper method for profile options
-  Widget _buildProfileOption(IconData icon, String title, VoidCallback onTap) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 5.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 2,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        leading: Icon(icon, color: Colors.green),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  Widget _buildProfileHeader() {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.green[800]!,
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: _profilePicFile != null
+                    ? FileImage(_profilePicFile!)
+                    : const AssetImage('assets/default_profile.png')
+                        as ImageProvider,
+                child: _isEditing
+                    ? Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            if (_isEditing)
+              FloatingActionButton.small(
+                onPressed: _pickProfilePicture,
+                backgroundColor: Colors.green[800],
+                child: const Icon(Icons.edit, color: Colors.white),
+              ),
+          ],
         ),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: onTap,
+        const SizedBox(height: 15),
+        _isEditing
+            ? TextField(
+                controller: _nameController,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+              )
+            : Text(
+                _nameController.text.isEmpty
+                    ? 'Your Name'
+                    : _nameController.text,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+        const SizedBox(height: 5),
+        Text(
+          _emailController.text,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 20, bottom: 10),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+          ),
+          const Expanded(
+            child: Divider(
+              indent: 10,
+              endIndent: 10,
+              thickness: 1,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // Glowing button widget
-  Widget _buildGlowButton({
-    required VoidCallback onPressed,
-    required String text,
-    Color backgroundColor = Colors.green,
+  Widget _buildProfileOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
   }) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        elevation: 10,
-        shadowColor: Colors.green.withOpacity(0.5),
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: backgroundColor.withOpacity(0.5),
-              spreadRadius: 1,
-              blurRadius: 15,
-            ),
-          ],
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.green[800], size: 22),
+              ),
+              const SizedBox(width: 15),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.chevron_right,
+                color: Colors.grey[400],
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildActionButton({
+    required String text,
+    required VoidCallback onPressed,
+    required IconData icon,
+    Color? backgroundColor,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        label: Text(text),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor ?? Colors.green[800],
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
+      ),
+    );
+  }
+
+  void _toggleEditMode() {
+    setState(() {
+      if (_isEditing) {
+        _saveProfile();
+      }
+      _isEditing = !_isEditing;
+    });
+  }
+
+  Future<void> _logout() async {
+    await _auth.signOut();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  Future<void> _showOrderHistory() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      QuerySnapshot orderSnapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: user.uid)
+          .orderBy('orderDate', descending: true)
+          .get();
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Order History',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (orderSnapshot.docs.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text('No orders found'),
+                  )
+                else
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    width: double.maxFinite,
+                    child: ListView.separated(
+                      itemCount: orderSnapshot.docs.length,
+                      separatorBuilder: (_, __) => const Divider(height: 20),
+                      itemBuilder: (context, index) {
+                        var order = orderSnapshot.docs[index].data()
+                            as Map<String, dynamic>;
+                        return OrderItemCard(order: order);
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('CLOSE'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      _showErrorSnackBar('Error fetching orders: $e');
+    }
+  }
+
+  void _showAddressDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Saved Address'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Kottukulam Hills, Pathamuttam P. O',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 5),
+            Text('Kerala 686532', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Help & Support'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Phone: +91 0481 243 6170'),
+            SizedBox(height: 10),
+            Text('Email: gitsbites@gmail.com'),
+            SizedBox(height: 15),
+            Text(
+              'We\'re available 24/7 to assist you with any questions or issues.',
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('About GitsBites'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Welcome to Gits Bites, your ultimate food ordering companion!',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'We\'re here to bring you a seamless, delightful, and personalized food experience by offering a wide variety of cuisines from your favorite restaurants. Whether you\'re craving a quick snack or a hearty meal, our easy-to-use platform allows you to browse menus, place orders, and track deliveries in just a few taps.',
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'With secure payment options, personalized recommendations, and real-time order updates, Gits Bites ensures convenience and quality with every bite.',
+              ),
+              const SizedBox(height: 15),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.facebook, size: 30),
+                    onPressed: () {},
+                  ),
+                  const SizedBox(width: 15),
+                  IconButton(
+                    icon: const Icon(Icons.camera_alt, size: 30),
+                    onPressed: () {},
+                  ),
+                  const SizedBox(width: 15),
+                  IconButton(
+                    icon: const Icon(Icons.link, size: 30),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class OrderItemCard extends StatelessWidget {
+  final Map<String, dynamic> order;
+
+  const OrderItemCard({super.key, required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['orderNumber']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    order['status']?.toString().toUpperCase() ?? 'PENDING',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  backgroundColor: _getStatusColor(order['status']),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${order['items']?.length ?? 0} items • ${_formatDate(order['orderDate'])}',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...(order['items'] as List<dynamic>?)?.map((item) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${item['name']} x${item['quantity']}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          Text(
+                            '₹${(item['price'] * item['quantity']).toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    )) ??
+                [],
+            const Divider(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  '₹${order['totalAmount']?.toStringAsFixed(2) ?? '0.00'}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return Colors.green[100]!;
+      case 'cancelled':
+        return Colors.red[100]!;
+      case 'processing':
+        return Colors.blue[100]!;
+      default:
+        return Colors.orange[100]!;
+    }
+  }
+
+  String _formatDate(dynamic date) {
+    if (date == null) return 'Unknown date';
+    DateTime orderDate = date is Timestamp ? date.toDate() : DateTime.now();
+    return '${orderDate.day}/${orderDate.month}/${orderDate.year}';
   }
 }

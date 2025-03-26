@@ -1,0 +1,3 @@
+-keep class com.razorpay.** { *; }
+-keepattributes *Annotation*
+-dontwarn com.razorpay.**

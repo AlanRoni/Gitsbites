@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
         // Navigate to the Home Page after successful login
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -335,7 +335,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: GestureDetector(
                       onTap: _signInWithGoogle, // Trigger Google Sign-In
                       child: RichText(
-                        text: TextSpan(
+                        text: const TextSpan(
                           text: "Don’t have an account? ",
                           style: TextStyle(color: Colors.grey, fontSize: 14),
                           children: [
