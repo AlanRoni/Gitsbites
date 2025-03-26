@@ -1,12 +1,14 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:universal_html/html.dart' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
+// Conditional imports will be handled differently
 class PaymentPage extends StatefulWidget {
   final int totalAmount;
   final List<Map<String, dynamic>> cartItems;
@@ -27,194 +29,159 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   String? selectedPaymentMethod;
-  bool isHoveredGooglePay = false;
-  bool isHoveredCOD = false;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late Razorpay _razorpay;
+  bool isPaymentSuccessful = false;
+  String transactionId = '';
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          'Secure Payment',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    transactionId = _generateTransactionId();
+  }
+
+  String _generateTransactionId() {
+    final random = Random();
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return String.fromCharCodes(Iterable.generate(
+        10, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _handleUPIPayment() {
+    if (kIsWeb) {
+      _handleUPIPaymentWeb();
+    } else {
+      _handleUPIPaymentMobile();
+    }
+  }
+
+  void _handleUPIPaymentWeb() {
+    try {
+      // This will only work on web
+      if (!kIsWeb) return;
+
+      // Using dynamic to avoid compilation errors on mobile
+      final dynamic js = _getJSLibrary();
+      final options = js.JsObject.jsify({
+        'key': 'rzp_test_Y7cq6hWayb2H5M',
+        'amount': widget.totalAmount * 100,
+        'currency': 'INR',
+        'name': 'GitsBites',
+        'description': 'Canteen Order Payment',
+        'prefill': {
+          'contact': '9876543210',
+          'email': widget.userEmail,
+        },
+        'theme': {'color': '#00C853'},
+        'method': {
+          'netbanking': true,
+          'card': true,
+          'upi': true,
+          'wallet': true,
+        },
+        'handler': (response) {
+          _handlePaymentSuccess(response);
+        },
+      });
+
+      final razorpay = js.context['Razorpay'];
+      razorpay.callMethod('open', [options]);
+    } catch (e) {
+      debugPrint('Web payment error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to initiate web payment: $e'),
+          backgroundColor: Colors.red,
         ),
-        centerTitle: true,
-        backgroundColor: Colors.green,
-        elevation: 4.0,
-        shadowColor: Colors.grey.shade300,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 25.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // **Payment Summary Card**
-              Container(
-                padding: const EdgeInsets.all(20.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12.withOpacity(0.1),
-                      blurRadius: 10.0,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Total Amount',
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    Text(
-                      'Rs. ${widget.totalAmount}',
-                      style: TextStyle(
-                        fontSize: 32.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade800,
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    // **Ordered Items List**
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: widget.cartItems
-                          .map(
-                            (item) => Text(
-                              "${item['name']} x${item['quantity']} - Rs. ${item['price'] * item['quantity']}",
-                              style: const TextStyle(
-                                  fontSize: 14, color: Colors.black54),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    const SizedBox(height: 10.0),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.lock_outline, size: 16, color: Colors.grey),
-                        SizedBox(width: 5),
-                        Text(
-                          'Transaction ID: #554732223687',
-                          style:
-                              TextStyle(fontSize: 14.0, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+      );
+    }
+  }
 
-              const SizedBox(height: 30.0),
+  dynamic _getJSLibrary() {
+    if (!kIsWeb) return null;
+    // This is a workaround to avoid compilation errors
+    // The actual import is handled by the build system
+    return dynamic;
+  }
 
-              // **Payment Methods Heading**
-              const Text(
-                'Select Payment Method',
-                style: TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 15.0),
+  void _handleUPIPaymentMobile() {
+    var options = {
+      'key': 'rzp_test_Y7cq6hWayb2H5M',
+      'amount': widget.totalAmount * 100,
+      'currency': 'INR',
+      'name': 'GitsBites',
+      'description': 'Canteen Order Payment',
+      'prefill': {
+        'contact': '9876543210',
+        'email': widget.userEmail,
+      },
+      'theme': {'color': '#00C853'},
+      'method': {
+        'netbanking': true,
+        'card': true,
+        'upi': true,
+        'wallet': true,
+      },
+    };
 
-              // **Payment Methods**
-              Column(
-                children: [
-                  _buildPaymentMethod(
-                    icon: Icons.account_balance_wallet,
-                    title: "UPI Payment",
-                    subtitle: "Pay securely via UPI",
-                    color: Colors.blue.shade600,
-                    onTap: () {
-                      setState(() {
-                        selectedPaymentMethod = 'Google Pay';
-                      });
-                    },
-                    isDisabled: selectedPaymentMethod != null &&
-                        selectedPaymentMethod != 'Google Pay',
-                    isHovered: isHoveredGooglePay,
-                    onHover: (isHovered) {
-                      setState(() {
-                        isHoveredGooglePay = isHovered;
-                      });
-                    },
-                    isSelected: selectedPaymentMethod == 'Google Pay',
-                  ),
-                  const SizedBox(height: 12.0),
-                  _buildPaymentMethod(
-                    icon: Icons.money,
-                    title: "Cash Payment",
-                    subtitle: "Pay with cash",
-                    color: Colors.green.shade700,
-                    onTap: () {
-                      setState(() {
-                        selectedPaymentMethod = 'Cash on Delivery';
-                      });
-                    },
-                    isDisabled: selectedPaymentMethod != null &&
-                        selectedPaymentMethod != 'Cash on Delivery',
-                    isHovered: isHoveredCOD,
-                    onHover: (isHovered) {
-                      setState(() {
-                        isHoveredCOD = isHovered;
-                      });
-                    },
-                    isSelected: selectedPaymentMethod == 'Cash on Delivery',
-                  ),
-                ],
-              ),
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint('Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open payment gateway: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
-              const SizedBox(height: 35.0),
-
-              // **Confirm Payment Button**
-              GestureDetector(
-                onTap: _handlePaymentConfirmation,
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Colors.green, Colors.greenAccent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8.0,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Confirm Payment',
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+  void _handlePaymentSuccess(dynamic response) {
+    debugPrint('Payment Successful: ${response['razorpay_payment_id']}');
+    setState(() {
+      isPaymentSuccessful = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment Successful: ${response['razorpay_payment_id']}'),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
       ),
     );
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    debugPrint('Payment Failed: ${response.message}');
+    setState(() {
+      isPaymentSuccessful = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment Failed: ${response.message}'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    debugPrint('External Wallet Selected: ${response.walletName}');
   }
 
   Future<void> _clearCart() async {
@@ -235,15 +202,21 @@ class _PaymentPageState extends State<PaymentPage> {
 
         await batch.commit();
 
-        // Return true to indicate successful cart clear
         if (mounted) {
           Navigator.of(context).pop(true);
         }
       } catch (e) {
-        print('Error clearing cart: $e');
+        debugPrint('Error clearing cart: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error clearing cart: $e')),
+            SnackBar(
+              content: Text('Error clearing cart: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+              ),
+            ),
           );
         }
       }
@@ -257,7 +230,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
       final orderNumber = DateTime.now().millisecondsSinceEpoch.toString();
 
-      // Create new order document
       await _firestore.collection('orders').add({
         'orderNumber': orderNumber,
         'userId': user.uid,
@@ -268,203 +240,405 @@ class _PaymentPageState extends State<PaymentPage> {
         'orderDate': DateTime.now(),
         'items': widget.cartItems,
         'status': 'pending',
-        'transactionId': '#${orderNumber.substring(orderNumber.length - 6)}',
+        'transactionId': transactionId,
       });
 
-      // Clear cart and show success dialog
       await _clearCart();
 
       if (!mounted) return;
 
-      // Navigate home after success
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/home',
         (route) => false,
       );
     } catch (e) {
-      print('Error saving order: $e');
+      debugPrint('Error saving order: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error placing order: $e')),
+          SnackBar(
+            content: Text('Error placing order: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+          ),
         );
       }
     }
   }
 
   void _handlePaymentConfirmation() async {
-    if (selectedPaymentMethod != null) {
-      try {
-        await _generateReceipt(widget.totalAmount, widget.cartItems);
-        await _saveOrderToFirestore();
+    if (selectedPaymentMethod == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a payment method'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+        ),
+      );
+      return;
+    }
 
-        if (mounted) {
-          // Show confirmation popup
-          showDialog(
-            context: context,
-            barrierDismissible: false, // Prevent dismissing by tapping outside
-            builder: (BuildContext context) {
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                title: Column(
+    if (selectedPaymentMethod == 'UPI Payment' && !isPaymentSuccessful) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete the UPI payment first'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _saveOrderToFirestore();
+      await _generateReceipt(widget.totalAmount, widget.cartItems);
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 50,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 60,
+                      ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 24),
                     const Text(
                       'Payment Successful!',
                       style: TextStyle(
-                        color: Colors.green,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        color: Colors.green,
                       ),
                     ),
-                  ],
-                ),
-                content: const Text(
-                  'Your order has been placed successfully.',
-                  textAlign: TextAlign.center,
-                ),
-                actions: [
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navigate to home and clear all routes
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/home',
-                          (route) => false,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error processing payment: $e')),
-          );
-        }
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a payment method')),
-      );
-    }
-  }
-
-  // **Reusable Payment Method Card**
-  Widget _buildPaymentMethod({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isDisabled,
-    required bool isHovered,
-    required Function(bool) onHover,
-    required bool isSelected,
-  }) {
-    return MouseRegion(
-      onEnter: (_) => onHover(true),
-      onExit: (_) => onHover(false),
-      child: GestureDetector(
-        onTap: isDisabled ? null : onTap,
-        child: AbsorbPointer(
-          absorbing: isDisabled,
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-            decoration: BoxDecoration(
-              color:
-                  isHovered || isSelected ? Colors.grey.shade100 : Colors.white,
-              borderRadius: BorderRadius.circular(12.0),
-              boxShadow: [
-                if (isSelected)
-                  BoxShadow(
-                    color: color.withOpacity(0.6),
-                    blurRadius: 10.0,
-                    offset: const Offset(0, 4),
-                  )
-                else
-                  BoxShadow(
-                    color: Colors.black12.withOpacity(0.1),
-                    blurRadius: 6.0,
-                    offset: const Offset(0, 3),
-                  ),
-              ],
-              border: isHovered || isSelected
-                  ? Border.all(color: color, width: 2.0)
-                  : null,
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: color.withOpacity(0.2),
-                  radius: 22,
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const SizedBox(width: 15.0),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                    const SizedBox(height: 16),
                     Text(
-                      title,
+                      'Transaction ID: $transactionId',
                       style: const TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Your order has been placed successfully.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
                         color: Colors.black87,
                       ),
                     ),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.black54,
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/home',
+                            (route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Continue Shopping',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const Spacer(),
-                if (isSelected)
-                  Icon(Icons.check_circle, color: color, size: 24),
-              ],
+              ),
+            );
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('Error confirming payment: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error confirming payment: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text(
+          'Secure Payment',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20.0,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.green[800],
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(15),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Order Summary',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...widget.cartItems.map((item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "${item['name']} x${item['quantity']}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                Text(
+                                  "Rs. ${item['price'] * item['quantity']}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                      const Divider(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Amount',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Rs. ${widget.totalAmount}',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Icon(Icons.receipt,
+                              size: 16, color: Colors.grey),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Transaction ID: $transactionId',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Payment Methods',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentMethod(
+                icon: Icons.account_balance_wallet,
+                title: "UPI Payment",
+                subtitle: "Pay securely via UPI",
+                color: Colors.blue[600]!,
+                onTap: _handleUPIPayment,
+                isSelected: selectedPaymentMethod == 'UPI Payment',
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentMethod(
+                icon: Icons.money,
+                title: "Cash Payment",
+                subtitle: "Pay with cash",
+                color: Colors.green[700]!,
+                onTap: () {
+                  setState(() {
+                    selectedPaymentMethod = 'Cash on Delivery';
+                  });
+                },
+                isSelected: selectedPaymentMethod == 'Cash on Delivery',
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _handlePaymentConfirmation,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[800],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 3,
+                    shadowColor: Colors.green.withOpacity(0.3),
+                  ),
+                  child: const Text(
+                    'Confirm Payment',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // **Generate Receipt PDF**
-  // **Generate Professional Receipt PDF**
+  Widget _buildPaymentMethod({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+    required bool isSelected,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected) Icon(Icons.check_circle, color: color, size: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _generateReceipt(
       int amount, List<Map<String, dynamic>> cartItems) async {
     final pdf = pw.Document();
@@ -476,7 +650,6 @@ class _PaymentPageState extends State<PaymentPage> {
         build: (pw.Context context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            // **Header**
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -507,10 +680,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 ),
               ],
             ),
-
             pw.SizedBox(height: 20),
-
-            // **Transaction Details**
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
@@ -520,23 +690,19 @@ class _PaymentPageState extends State<PaymentPage> {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  _buildTransactionDetail("Transaction ID:", "#554732223687"),
+                  _buildTransactionDetail("Transaction ID:", transactionId),
                   _buildTransactionDetail(
-                      "Payment Method:", "Cash on Delivery"),
+                      "Payment Method:", selectedPaymentMethod ?? 'N/A'),
                   _buildTransactionDetail("Date:", _getCurrentDate()),
+                  _buildTransactionDetail("Customer:", widget.userName),
                 ],
               ),
             ),
-
             pw.SizedBox(height: 20),
-
-            // **Purchased Items Table**
             pw.Text("Purchased Items",
                 style:
                     pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-
             pw.SizedBox(height: 10),
-
             pw.Table.fromTextArray(
               headers: ["Item", "Qty", "Price (Rs)"],
               data: cartItems
@@ -557,10 +723,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 2: pw.Alignment.centerRight,
               },
             ),
-
             pw.SizedBox(height: 20),
-
-            // **Total Amount**
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
@@ -583,10 +746,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 ],
               ),
             ),
-
             pw.SizedBox(height: 30),
-
-            // **Thank You Message**
             pw.Center(
               child: pw.Text("Thank you for shopping with GitsBites!",
                   style: pw.TextStyle(
@@ -602,16 +762,62 @@ class _PaymentPageState extends State<PaymentPage> {
     final Uint8List pdfBytes = await pdf.save();
 
     if (kIsWeb) {
-      final blob = html.Blob([pdfBytes], 'application/pdf');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      html.AnchorElement(href: url)
-        ..setAttribute('download', 'receipt.pdf')
-        ..click();
-      html.Url.revokeObjectUrl(url);
+      _savePdfWeb(pdfBytes);
+    } else {
+      await _savePdfMobile(pdfBytes);
     }
   }
 
-  // **Helper Method: Build Transaction Detail Row**
+  void _savePdfWeb(Uint8List pdfBytes) {
+    try {
+      if (!kIsWeb) return;
+
+      // This will be handled by the web compiler
+      final dynamic html = _getHTMLLibrary();
+      if (html == null) return;
+
+      final blob = html.Blob([pdfBytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.AnchorElement(href: url)
+        ..setAttribute('download', 'GitsBites_Receipt_$transactionId.pdf')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } catch (e) {
+      debugPrint('Error saving PDF on web: $e');
+    }
+  }
+
+  Future<void> _savePdfMobile(Uint8List pdfBytes) async {
+    try {
+      // This will be handled by the mobile compiler
+      final directory = await getApplicationDocumentsDirectory();
+      final file =
+          File('${directory.path}/GitsBites_Receipt_$transactionId.pdf');
+      await file.writeAsBytes(pdfBytes);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Receipt saved to ${file.path}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error saving PDF on mobile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save receipt: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  dynamic _getHTMLLibrary() {
+    if (!kIsWeb) return null;
+    // This is a workaround to avoid compilation errors
+    return dynamic;
+  }
+
   pw.Widget _buildTransactionDetail(String title, String value) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 3),
@@ -627,9 +833,24 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  // **Helper Method: Get Current Date**
   String _getCurrentDate() {
     final now = DateTime.now();
-    return "${now.day}/${now.month}/${now.year}";
+    return "${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}";
+  }
+}
+
+// Mobile-specific implementations
+Future<dynamic> getApplicationDocumentsDirectory() async {
+  if (kIsWeb) return null;
+  // This will be replaced by the actual implementation for mobile
+  return null;
+}
+
+class File {
+  final String path;
+  File(this.path);
+
+  Future<void> writeAsBytes(Uint8List bytes) async {
+    // Implementation for mobile
   }
 }
