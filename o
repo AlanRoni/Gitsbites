@@ -1,0 +1,117 @@
+{
+  "prefixes": [],
+  "items": [
+    {
+      "name": "Item Images/appam.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/biriyani.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/chapati.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/chickencurry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/chillichicken.jpg",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/eggcurry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/fishfry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/idli.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/item_placeholder.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/kadalacurry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/meals.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/porotta.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item Images/puttu.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/appam.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/biriyani.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/chapati.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/chickencurry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/chillichicken.jpg",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/eggcurry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/fishfry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/idli.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/item_placeholder.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/kadalacurry.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/meals.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/porotta.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Item_Images/puttu.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Profile Pictures/item_placeholder.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    },
+    {
+      "name": "Profile Pictures/profile_pic.png",
+      "bucket": "gitsbites.firebasestorage.app"
+    }
+  ]
+}

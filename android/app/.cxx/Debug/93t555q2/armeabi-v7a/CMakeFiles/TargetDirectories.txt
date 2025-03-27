@@ -1,0 +1,2 @@
+/home/fredysomy/Desktop/Projects/Gitsbites/android/app/.cxx/Debug/93t555q2/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/fredysomy/Desktop/Projects/Gitsbites/android/app/.cxx/Debug/93t555q2/armeabi-v7a/CMakeFiles/rebuild_cache.dir

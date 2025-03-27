@@ -23,6 +23,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
+    name: 'gitsbites',
     options: const FirebaseOptions(
       apiKey: 'AIzaSyADtVWJBi-zIy2gWDggIN9tHvPJ8NROHK0',
       authDomain: 'gitsbites.firebaseapp.com',
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
           if (user != null) {
             return PaymentPage(
               totalAmount: 0,
-              cartItems: [],
+              cartItems: const [],
               userName: user.displayName ?? 'Guest',
               userEmail: user.email ?? 'No Email',
             );

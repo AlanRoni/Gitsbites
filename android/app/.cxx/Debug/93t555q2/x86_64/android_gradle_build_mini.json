@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/fredysomy/snap/flutter/common/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/fredysomy/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/fredysomy/Desktop/Projects/Gitsbites/android/app/.cxx/Debug/93t555q2/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/fredysomy/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/fredysomy/Desktop/Projects/Gitsbites/android/app/.cxx/Debug/93t555q2/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
