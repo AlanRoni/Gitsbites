@@ -3,6 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Allow full read and write access to all collections
     match /{collection}/{document=**} {
-      allow read;
+      allow read, write: if true;
+    }
   }
 }
